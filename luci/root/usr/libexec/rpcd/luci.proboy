@@ -34,6 +34,9 @@ case "$1" in
         version="unknown"
         [ -f /opt/proboy/VERSION ] && version=$(cat /opt/proboy/VERSION 2>/dev/null)
 
+        # Get language
+        language="${language:-ru}"
+
         cat << EOF
 {
     "running": $running,
@@ -43,6 +46,7 @@ case "$1" in
     "dns": $dns,
     "strategy": "${zapret_strategy:-auto}",
     "dns_provider": "${dns_provider:-cloudflare}",
+    "language": "$language",
     "version": "$version"
 }
 EOF

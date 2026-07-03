@@ -300,6 +300,7 @@ create_config() {
 # Proboy Configuration
 # Version: 1.0.0 Phoenix ALPHA
 enabled=1
+language=ru
 log_level=info
 zapret_enabled=1
 zapret_strategy=auto
@@ -517,6 +518,36 @@ install_luci() {
     ok "LuCI integration installed"
 }
 
+select_language() {
+    echo ""
+    echo "  ${CYN}Select language / Выберите язык:${NC}"
+    echo ""
+    echo "  1) Русский"
+    echo "  2) English"
+    echo ""
+    printf "  Choice [1-2]: "
+    read lang_choice
+
+    case "${lang_choice}" in
+        2) LANG_CODE="en" ;;
+        *) LANG_CODE="ru" ;;
+    esac
+
+    # Save to config
+    if [ -f "${CFG}/proboy.conf" ]; then
+        sed -i "s/^language=.*/language=${LANG_CODE}/" "${CFG}/proboy.conf" 2>/dev/null || true
+        grep -q "^language=" "${CFG}/proboy.conf" 2>/dev/null || echo "language=${LANG_CODE}" >> "${CFG}/proboy.conf"
+    fi
+
+    # Save to UCI
+    if command -v uci >/dev/null 2>&1 && [ -f /etc/config/proboy ]; then
+        uci set proboy.main.language="${LANG_CODE}" 2>/dev/null || true
+        uci commit proboy 2>/dev/null || true
+    fi
+
+    ok "Language: ${LANG_CODE}"
+}
+
 show_summary() {
     IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
     [ -z "${IP}" ] && IP="your-router-ip"
@@ -560,6 +591,7 @@ main() {
     fi
 
     detect_system
+    select_language
     install_deps
     mkdir -p "${DIR}/bin" "${DIR}/scripts" /var/log/proboy
     install_binaries

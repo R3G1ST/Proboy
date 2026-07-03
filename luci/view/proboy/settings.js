@@ -14,6 +14,11 @@ return view.extend({
         o.value('0', _('Disabled'));
         o.default = '1';
 
+        o = s.option(form.ListValue, 'language', _('Language'));
+        o.value('ru', 'Русский');
+        o.value('en', 'English');
+        o.default = 'ru';
+
         var s2 = m.section(form.TypedSection, 'proboy', _('Web Panel'));
         s2.anonymous = true;
 

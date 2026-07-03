@@ -71,6 +71,17 @@ if command -v nft >/dev/null 2>&1; then
     nft delete table inet proboy_ipv6 2>/dev/null || true
 fi
 
+# Remove LuCI integration
+echo "[>>] Removing LuCI integration..."
+rm -f /usr/share/luci/menu.d/proboy.json
+rm -rf /www/luci-static/resources/view/proboy
+rm -f /usr/share/rpcd/acl.d/proboy.json
+rm -f /usr/libexec/rpcd/luci.proboy
+rm -f /etc/config/proboy
+
+# Restart rpcd
+/etc/init.d/rpcd restart 2>/dev/null || true
+
 # Remove all Proboy files
 echo "[>>] Removing Proboy files..."
 rm -rf /opt/proboy /etc/proboy /var/log/proboy /var/run/proboy /usr/local/bin/proboy
