@@ -1,11 +1,13 @@
 /* Proboy API Client */
+const API_BASE = '/cgi-bin/proboy-api';
+
 const API = {
     async get(endpoint) {
-        const resp = await fetch(`/api${endpoint}`);
+        const resp = await fetch(`${API_BASE}${endpoint}`);
         return resp.json();
     },
     async post(endpoint, data) {
-        const resp = await fetch(`/api${endpoint}`, {
+        const resp = await fetch(`${API_BASE}${endpoint}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)

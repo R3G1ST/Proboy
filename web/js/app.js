@@ -47,7 +47,7 @@ async function loadPage(page) {
 
 async function loadSystemInfo() {
     try {
-        const resp = await fetch('/api/system');
+        const resp = await fetch('/cgi-bin/proboy-api/system');
         const data = await resp.json();
 
         document.getElementById('infoOS').textContent = `${data.os} ${data.os_version}`;
@@ -63,7 +63,7 @@ async function loadSystemInfo() {
 
 async function checkStatus() {
     try {
-        const resp = await fetch('/api/status');
+        const resp = await fetch('/cgi-bin/proboy-api/status');
         const data = await resp.json();
         const dot = document.getElementById('statusDot');
         const text = document.getElementById('statusText');

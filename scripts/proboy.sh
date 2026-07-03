@@ -200,6 +200,29 @@ start_dns() {
     log_info "DNS bypass started"
 }
 
+# ─── Start web server ────────────────────────────────────
+start_web() {
+    if [ "${web_enabled}" != "1" ]; then
+        log_warn "Web panel disabled in config"
+        return
+    fi
+
+    log_step "Starting web server..."
+    if [ -x "${INSTALL_DIR}/scripts/webserver.sh" ]; then
+        "${INSTALL_DIR}/scripts/webserver.sh" start
+    else
+        log_warn "Web server script not found"
+    fi
+}
+
+# ─── Stop web server ──────────────────────────────────────
+stop_web() {
+    log_step "Stopping web server..."
+    if [ -x "${INSTALL_DIR}/scripts/webserver.sh" ]; then
+        "${INSTALL_DIR}/scripts/webserver.sh" stop
+    fi
+}
+
 # ─── Start all ────────────────────────────────────────────
 start_all() {
     load_config
@@ -219,6 +242,7 @@ start_all() {
     start_gamefilter
     start_dns
     start_singbox
+    start_web
 
     echo ""
     log_info "Proboy started successfully!"
@@ -233,6 +257,7 @@ stop_all() {
     log_step "Stopping Proboy..."
     echo ""
 
+    stop_web
     stop_singbox
     stop_zapret
 
@@ -294,6 +319,13 @@ show_status() {
         printf "${CYAN}  ║${NC}  DNS Bypass:  ${GREEN}● Enabled${NC}               ${CYAN}║${NC}\n"
     else
         printf "${CYAN}  ║${NC}  DNS Bypass:  ${YELLOW}● Disabled${NC}              ${CYAN}║${NC}\n"
+    fi
+
+    # Web panel
+    if [ "${web_enabled}" = "1" ]; then
+        printf "${CYAN}  ║${NC}  Web Panel:   ${GREEN}● Enabled${NC}               ${CYAN}║${NC}\n"
+    else
+        printf "${CYAN}  ║${NC}  Web Panel:   ${YELLOW}● Disabled${NC}              ${CYAN}║${NC}\n"
     fi
 
     printf "${CYAN}  ╚═══════════════════════════════════════╝${NC}\n"

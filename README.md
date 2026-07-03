@@ -60,6 +60,28 @@ sudo ./install.sh
 
 ---
 
+### Обновление
+
+```bash
+# Обновить до последней версии
+sh <(curl -sL https://raw.githubusercontent.com/R3G1ST/Proboy/main/update.sh)
+
+# Или если уже установлен
+sudo /opt/proboy/update.sh
+
+# Проверить наличие обновлений (без установки)
+sudo /opt/proboy/update.sh --check
+```
+
+Обновление автоматически:
+- Сохраняет вашу конфигурацию
+- Обновляет скрипты, модули, стратегии, списки
+- Обновляет бинарники (zapret, Hysteria2, sing-box)
+- Восстанавливает ваши настройки
+- Перезапускает сервисы
+
+---
+
 ### Управление
 
 ```bash
@@ -141,13 +163,22 @@ Proboy автоматически определяет модель вашего
 ```
 proboy/
 ├── install.sh                    # Красивый установщик
+├── update.sh                     # Безопасное обновление
+├── uninstall.sh                  # Удаление (генерируется)
 ├── README.md                     # Этот файл
 ├── LICENSE                       # MIT
 ├── VERSION                       # 1.0.0
 ├── scripts/
 │   ├── proboy.sh                 # Главный менеджер
+│   ├── webserver.sh              # Веб-сервер (busybox httpd)
 │   └── detect_system.sh          # Определение системы
-├── strategies/                   # 11 стратегий zapret
+├── web/                          # Веб-панель
+│   ├── index.html
+│   ├── css/proboy.css
+│   ├── js/app.js, api.js, i18n.js
+│   ├── cgi-bin/proboy-api        # CGI API handler
+│   └── modules/                  # Страницы
+├── strategies/                   # 14 стратегий zapret
 │   ├── general.sh                # Общая
 │   ├── fake-tls-auto.sh          # FAKE TLS AUTO
 │   ├── discord.sh                # Discord
@@ -157,21 +188,18 @@ proboy/
 │   ├── fortnite.sh               # Fortnite
 │   ├── cs2.sh                    # CS2
 │   ├── psn.sh                    # PlayStation Network
+│   ├── steam.sh, epic.sh         # Другие платформы
 │   ├── aggressive.sh             # Максимальный обход
 │   └── auto.sh                   # Авто-выбор
+├── modules/                      # Python модули
+│   ├── zapret/, gamefilter/
+│   ├── ps5/, network/, dns/
+│   ├── youtube/, ipv6/
+│   ├── subscriptions/, failover/
+│   └── combo/
 ├── game-servers/                 # IP базы серверов
-│   ├── steam.json, epic.json, riot.json
-│   ├── blizzard.json, ea.json
-│   ├── sony.json, microsoft.json, nintendo.json
 ├── lists/                        # Списки блокировок
-│   ├── domains.txt, ips.txt
-│   ├── youtube-domains.txt, discord-domains.txt
-│   ├── telegram-domains.txt, psn-domains.txt
 ├── nftables/                     # Правила файрвола
-│   ├── nftables-game.nft, ps5-nftables.nft
-│   ├── dns-bypass.nft, youtube-nftables.nft
-├── web/                          # Веб-панель
-│   ├── index.html, css/, js/
 ├── presets.json                  # Пресеты Combo Builder
 └── bin/                          # Бинарники (скачиваются)
 ```
@@ -250,6 +278,28 @@ git clone https://github.com/R3G1ST/Proboy.git /opt/proboy
 cd /opt/proboy
 sudo ./install.sh
 ```
+
+---
+
+### Update
+
+```bash
+# Update to latest version
+sh <(curl -sL https://raw.githubusercontent.com/R3G1ST/Proboy/main/update.sh)
+
+# Or if already installed
+sudo /opt/proboy/update.sh
+
+# Check for updates without installing
+sudo /opt/proboy/update.sh --check
+```
+
+The updater automatically:
+- Backs up your configuration
+- Updates scripts, modules, strategies, lists
+- Updates binaries (zapret, Hysteria2, sing-box)
+- Restores your settings
+- Restarts services
 
 ---
 
@@ -334,13 +384,22 @@ Proboy auto-detects your router model:
 ```
 proboy/
 ├── install.sh                    # Beautiful installer with ASCII banner
+├── update.sh                     # Safe in-place updater
+├── uninstall.sh                  # Uninstaller (generated)
 ├── README.md                     # This file
 ├── LICENSE                       # MIT
 ├── VERSION                       # 1.0.0
 ├── scripts/
 │   ├── proboy.sh                 # Core manager (start/stop/restart)
+│   ├── webserver.sh              # Web server (busybox httpd)
 │   └── detect_system.sh          # System detection (OS, router, CPU, RAM)
-├── strategies/                   # 11 zapret strategies
+├── web/                          # Web panel
+│   ├── index.html
+│   ├── css/proboy.css
+│   ├── js/app.js, api.js, i18n.js
+│   ├── cgi-bin/proboy-api        # CGI API handler
+│   └── modules/                  # Pages
+├── strategies/                   # 14 zapret strategies
 │   ├── general.sh                # General bypass
 │   ├── fake-tls-auto.sh          # FAKE TLS AUTO
 │   ├── discord.sh                # Discord optimized
@@ -350,21 +409,18 @@ proboy/
 │   ├── fortnite.sh               # Fortnite optimized
 │   ├── cs2.sh                    # CS2 optimized
 │   ├── psn.sh                    # PlayStation Network
+│   ├── steam.sh, epic.sh         # Other platforms
 │   ├── aggressive.sh             # Maximum bypass
 │   └── auto.sh                   # Auto-selected
+├── modules/                      # Python modules
+│   ├── zapret/, gamefilter/
+│   ├── ps5/, network/, dns/
+│   ├── youtube/, ipv6/
+│   ├── subscriptions/, failover/
+│   └── combo/
 ├── game-servers/                 # Game server IP databases
-│   ├── steam.json, epic.json, riot.json
-│   ├── blizzard.json, ea.json
-│   ├── sony.json, microsoft.json, nintendo.json
 ├── lists/                        # Block lists
-│   ├── domains.txt, ips.txt
-│   ├── youtube-domains.txt, discord-domains.txt
-│   ├── telegram-domains.txt, psn-domains.txt
 ├── nftables/                     # Firewall rules
-│   ├── nftables-game.nft, ps5-nftables.nft
-│   ├── dns-bypass.nft, youtube-nftables.nft
-├── web/                          # Web panel
-│   ├── index.html, css/, js/
 ├── presets.json                  # Combo Builder presets
 └── bin/                          # Binaries (downloaded on install)
 ```

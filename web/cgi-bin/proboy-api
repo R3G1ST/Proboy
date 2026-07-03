@@ -1,0 +1,287 @@
+#!/bin/sh
+# Proboy API — CGI handler for web panel
+# Handles: /api/status, /api/system, /api/start, /api/stop, /api/restart
+
+INSTALL_DIR="/opt/proboy"
+CONFIG_DIR="/etc/proboy"
+PID_DIR="/var/run/proboy"
+
+# Read request info from CGI environment
+REQUEST_METHOD="${REQUEST_METHOD:-GET}"
+REQUEST_URI="${REQUEST_URI:-/}"
+PATH_INFO="${PATH_INFO:-}"
+
+# Extract the API endpoint
+# REQUEST_URI will be like /cgi-bin/proboy-api/status
+# or PATH_INFO will be /status
+ENDPOINT=""
+if [ -n "${PATH_INFO}" ] && [ "${PATH_INFO}" != "/" ]; then
+    ENDPOINT="${PATH_INFO#/}"
+else
+    # Extract from REQUEST_URI: /cgi-bin/proboy-api/status → status
+    case "${REQUEST_URI}" in
+        /cgi-bin/proboy-api/*) ENDPOINT="${REQUEST_URI#/cgi-bin/proboy-api/}" ;;
+        /cgi-bin/proboy-api) ENDPOINT="" ;;
+        *) ENDPOINT="${REQUEST_URI#/}" ;;
+    esac
+fi
+
+# Parse POST body if present
+POST_BODY=""
+if [ "${REQUEST_METHOD}" = "POST" ] && [ -n "${CONTENT_LENGTH}" ]; then
+    POST_BODY=$(dd bs=1 count="${CONTENT_LENGTH}" 2>/dev/null)
+fi
+
+# JSON helpers
+json_header() {
+    printf "Content-Type: application/json\r\n"
+    printf "Access-Control-Allow-Origin: *\r\n"
+    printf "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
+    printf "Access-Control-Allow-Headers: Content-Type\r\n"
+    printf "Cache-Control: no-cache\r\n"
+    printf "\r\n"
+}
+
+json_kv() {
+    printf '"%s": "%s"' "$1" "$2"
+}
+
+json_kv_n() {
+    printf '"%s": %s' "$1" "$2"
+}
+
+# Load config
+load_config() {
+    if [ -f "${CONFIG_DIR}/proboy.conf" ]; then
+        . "${CONFIG_DIR}/proboy.conf"
+    fi
+}
+
+# Check if a process is running by PID file
+is_running() {
+    local pidfile="${PID_DIR}/$1.pid"
+    if [ -f "${pidfile}" ]; then
+        local pid=$(cat "${pidfile}" 2>/dev/null)
+        if [ -n "${pid}" ] && kill -0 "${pid}" 2>/dev/null; then
+            return 0
+        fi
+        rm -f "${pidfile}"
+    fi
+    return 1
+}
+
+# Detect system info
+get_system_info() {
+    OS="unknown"
+    OS_VERSION=""
+    OS_ARCH=""
+    ROUTER_MODEL=""
+    ROUTER_BRAND=""
+    CPU=""
+    CPU_CORES=""
+    RAM_MB=""
+    FLASH_MB=""
+
+    if [ -f /etc/openwrt_release ]; then
+        . /etc/openwrt_release
+        OS="openwrt"
+        OS_VERSION="${DISTRIB_RELEASE}"
+        OS_ARCH="${DISTRIB_ARCH}"
+    elif [ -f /etc/os-release ]; then
+        . /etc/os-release
+        OS="${ID:-linux}"
+        OS_VERSION="${VERSION_ID}"
+        OS_ARCH="$(uname -m)"
+    fi
+
+    if [ -f /tmp/sysinfo/model ]; then
+        ROUTER_MODEL="$(cat /tmp/sysinfo/model 2>/dev/null)"
+    elif [ -f /proc/device-tree/model ]; then
+        ROUTER_MODEL="$(cat /proc/device-tree/model 2>/dev/null | tr '\0' ' ')"
+    fi
+
+    case "${ROUTER_MODEL}" in
+        *Xiaomi*|*Mi*|*Redmi*) ROUTER_BRAND="Xiaomi" ;;
+        *TP-Link*) ROUTER_BRAND="TP-Link" ;;
+        *GL.iNet*) ROUTER_BRAND="GL.iNet" ;;
+        *) ROUTER_BRAND="" ;;
+    esac
+
+    CPU="$(cat /proc/cpuinfo 2>/dev/null | grep -m1 'model name\|Processor\|Hardware\|CPU implementer' | cut -d: -f2 | xargs)"
+    [ -z "${CPU}" ] && CPU="$(uname -m)"
+    CPU_CORES="$(nproc 2>/dev/null || echo 1)"
+    RAM_MB="$(free 2>/dev/null | awk '/Mem:/{print int($2/1024)}' || echo 0)"
+    FLASH_MB="$(df -m / 2>/dev/null | tail -1 | awk '{print $4}' || echo 0)"
+}
+
+# Handle /api/status
+handle_status() {
+    load_config
+
+    ZAPRET_RUNNING="false"
+    SINGBOX_RUNNING="false"
+    GAMEFILTER_ENABLED="false"
+    DNS_ENABLED="false"
+    WEB_ENABLED="false"
+
+    if is_running "zapret"; then ZAPRET_RUNNING="true"; fi
+    if is_running "singbox"; then SINGBOX_RUNNING="true"; fi
+    if [ "${gamefilter_enabled}" = "1" ]; then GAMEFILTER_ENABLED="true"; fi
+    if [ "${dns_enabled}" = "1" ]; then DNS_ENABLED="true"; fi
+    if [ "${web_enabled}" = "1" ]; then WEB_ENABLED="true"; fi
+
+    ANY_RUNNING="false"
+    if [ "${ZAPRET_RUNNING}" = "true" ] || [ "${SINGBOX_RUNNING}" = "true" ]; then
+        ANY_RUNNING="true"
+    fi
+
+    json_header
+    printf '{'
+    json_kv_n "running" "${ANY_RUNNING}"
+    printf ','
+    json_kv_n "zapret" "${ZAPRET_RUNNING}"
+    printf ','
+    json_kv_n "singbox" "${SINGBOX_RUNNING}"
+    printf ','
+    json_kv_n "gamefilter" "${GAMEFILTER_ENABLED}"
+    printf ','
+    json_kv_n "dns" "${DNS_ENABLED}"
+    printf ','
+    json_kv_n "web" "${WEB_ENABLED}"
+    printf ','
+    json_kv "zapret_strategy" "${zapret_strategy:-auto}"
+    printf ','
+    json_kv "dns_provider" "${dns_provider:-cloudflare}"
+    printf ','
+    json_kv "subscription_url" "${subscription_url:-}"
+    printf '}'
+}
+
+# Handle /api/system
+handle_system() {
+    get_system_info
+
+    json_header
+    printf '{'
+    json_kv "os" "${OS}"
+    printf ','
+    json_kv "os_version" "${OS_VERSION}"
+    printf ','
+    json_kv "os_arch" "${OS_ARCH}"
+    printf ','
+    json_kv "router_model" "${ROUTER_MODEL}"
+    printf ','
+    json_kv "router_brand" "${ROUTER_BRAND}"
+    printf ','
+    json_kv "cpu" "${CPU}"
+    printf ','
+    json_kv_n "cpu_cores" "${CPU_CORES}"
+    printf ','
+    json_kv_n "ram_mb" "${RAM_MB}"
+    printf ','
+    json_kv_n "flash_free_mb" "${FLASH_MB}"
+    printf '}'
+}
+
+# Handle /api/start
+handle_start() {
+    if [ -x "${INSTALL_DIR}/scripts/proboy.sh" ]; then
+        "${INSTALL_DIR}/scripts/proboy.sh" start >/dev/null 2>&1 &
+    fi
+    json_header
+    printf '{"ok": true, "message": "Starting services..."}'
+}
+
+# Handle /api/stop
+handle_stop() {
+    if [ -x "${INSTALL_DIR}/scripts/proboy.sh" ]; then
+        "${INSTALL_DIR}/scripts/proboy.sh" stop >/dev/null 2>&1 &
+    fi
+    json_header
+    printf '{"ok": true, "message": "Stopping services..."}'
+}
+
+# Handle /api/restart
+handle_restart() {
+    if [ -x "${INSTALL_DIR}/scripts/proboy.sh" ]; then
+        "${INSTALL_DIR}/scripts/proboy.sh" restart >/dev/null 2>&1 &
+    fi
+    json_header
+    printf '{"ok": true, "message": "Restarting services..."}'
+}
+
+# Handle /api/config (GET: return config, POST: save config)
+handle_config() {
+    load_config
+
+    if [ "${REQUEST_METHOD}" = "POST" ]; then
+        # Save config from POST body
+        if [ -n "${POST_BODY}" ]; then
+            # Basic validation — write to temp then move
+            echo "${POST_BODY}" > "${CONFIG_DIR}/proboy.conf.tmp"
+            mv "${CONFIG_DIR}/proboy.conf.tmp" "${CONFIG_DIR}/proboy.conf"
+            json_header
+            printf '{"ok": true, "message": "Config saved"}'
+        else
+            json_header
+            printf '{"ok": false, "message": "No data received"}'
+        fi
+        return
+    fi
+
+    # GET — return current config as JSON
+    json_header
+    printf '{'
+    json_kv "enabled" "${enabled:-1}"
+    printf ','
+    json_kv "zapret_enabled" "${zapret_enabled:-1}"
+    printf ','
+    json_kv "zapret_strategy" "${zapret_strategy:-auto}"
+    printf ','
+    json_kv "gamefilter_enabled" "${gamefilter_enabled:-1}"
+    printf ','
+    json_kv "gamefilter_mode" "${gamefilter_mode:-universal}"
+    printf ','
+    json_kv "ps5_enabled" "${ps5_enabled:-0}"
+    printf ','
+    json_kv "dns_enabled" "${dns_enabled:-1}"
+    printf ','
+    json_kv "dns_provider" "${dns_provider:-cloudflare}"
+    printf ','
+    json_kv "youtube_enabled" "${youtube_enabled:-1}"
+    printf ','
+    json_kv "ipv6_enabled" "${ipv6_enabled:-0}"
+    printf ','
+    json_kv "failover_enabled" "${failover_enabled:-1}"
+    printf ','
+    json_kv "subscription_url" "${subscription_url:-}"
+    printf ','
+    json_kv_n "web_port" "${web_port:-8080}"
+    printf '}'
+}
+
+# Handle CORS preflight
+handle_options() {
+    json_header
+    printf ''
+    exit 0
+}
+
+# Handle OPTIONS for CORS
+if [ "${REQUEST_METHOD}" = "OPTIONS" ]; then
+    handle_options
+fi
+
+# Route requests
+case "${ENDPOINT}" in
+    status)     handle_status ;;
+    system)     handle_system ;;
+    start)      handle_start ;;
+    stop)       handle_stop ;;
+    restart)    handle_restart ;;
+    config)     handle_config ;;
+    *)
+        json_header
+        printf '{"error": "Unknown endpoint: %s"}' "${ENDPOINT}"
+        ;;
+esac

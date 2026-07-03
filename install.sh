@@ -215,12 +215,13 @@ install_binaries() {
 
 install_files() {
     step "Downloading project files..."
-    TOTAL=62
+    TOTAL=64
     CNT=0
     FAIL=0
 
     for f in \
-        scripts/proboy.sh scripts/detect_system.sh scripts/apply_config.sh \
+        scripts/proboy.sh scripts/webserver.sh scripts/detect_system.sh scripts/apply_config.sh \
+        web/cgi-bin/proboy-api \
         modules/zapret/zapret_manager.py modules/gamefilter/gamefilter.py \
         modules/ps5/ps5_manager.py modules/network/network_analyzer.py \
         modules/dns/dns_manager.py modules/youtube/youtube_manager.py \
@@ -350,8 +351,12 @@ install_uninstall() {
 
     cat > "${DIR}/uninstall.sh" << 'UNEOF'
 #!/bin/sh
-echo "Proboy Uninstaller"
+echo "  ╔═══════════════════════════════════════╗"
+echo "  ║  Proboy Uninstaller                   ║"
+echo "  ╚═══════════════════════════════════════╝"
+echo ""
 echo "This will remove Proboy completely."
+echo ""
 printf "Are you sure? y/N: "
 read ans
 if [ "$ans" != "y" ] && [ "$ans" != "Y" ]; then
@@ -359,6 +364,9 @@ if [ "$ans" != "y" ] && [ "$ans" != "Y" ]; then
     exit 0
 fi
 
+# Stop Proboy service
+echo ""
+echo "[>>] Stopping Proboy..."
 if [ -f /etc/init.d/proboy ]; then
     /etc/init.d/proboy stop 2>/dev/null
     /etc/init.d/proboy disable 2>/dev/null
@@ -370,9 +378,38 @@ if command -v systemctl >/dev/null 2>&1; then
     rm -f /etc/systemd/system/proboy.service
     systemctl daemon-reload 2>/dev/null
 fi
+
+# Stop sing-box
+echo "[>>] Stopping sing-box..."
+if [ -f /opt/proboy/bin/sing-box ]; then
+    # Kill any running sing-box processes
+    pkill -f "sing-box" 2>/dev/null || true
+fi
+
+# Ask about sing-box removal
+echo ""
+printf "Remove sing-box binary? (for other projects) [y/N]: "
+read sb_ans
+if [ "$sb_ans" = "y" ] || [ "$sb_ans" = "Y" ]; then
+    rm -f /opt/proboy/bin/sing-box
+    echo "[OK] sing-box removed"
+else
+    echo "[OK] sing-box kept"
+fi
+
+# Flush nftables
+echo "[>>] Flushing firewall rules..."
 command -v nft >/dev/null 2>&1 && nft flush ruleset 2>/dev/null
+
+# Remove all Proboy files
+echo "[>>] Removing Proboy files..."
 rm -rf /opt/proboy /etc/proboy /var/log/proboy /var/run/proboy /usr/local/bin/proboy
-echo "Proboy removed"
+
+echo ""
+echo "  ╔═══════════════════════════════════════╗"
+echo "  ║  Proboy removed completely            ║"
+echo "  ╚═══════════════════════════════════════╝"
+echo ""
 UNEOF
 
     chmod +x "${DIR}/uninstall.sh"
@@ -411,6 +448,7 @@ show_summary() {
     echo ""
     echo "  ${YEL}Web Panel:${NC}  ${CYN}http://${IP}:8080${NC}"
     echo "  ${YEL}CLI:${NC}        proboy start | stop | restart | status"
+    echo "  ${YEL}Uninstall:${NC} ${DIR}/uninstall.sh"
     echo ""
     echo "  ============================================"
     echo "  ${GRN}Proboy x FreeLink${NC}"
