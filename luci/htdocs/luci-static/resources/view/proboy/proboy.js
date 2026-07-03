@@ -12,7 +12,7 @@ function isRunning(name) {
     return false;
 }
 
-function getInfo() {
+function I() {
     var R = {};
     try { var m = fs.read("/proc/meminfo"); if (m) { var x = m.match(/MemTotal:\s+(\d+)/); if (x) R.ram = Math.round(parseInt(x[1])/1024)+" MB"; } } catch(e) {}
     try { var d = fs.exec("/bin/df",["-m","/"]); if (d.stdout) { var p = d.stdout.split("\n")[1].split(/\s+/); R.flash = p[3]+" MB free"; } } catch(e) {}
@@ -32,124 +32,112 @@ function getInfo() {
 return view.extend({
     render: function() {
         var m = new form.Map("proboy", "\u041F\u0440\u043E\u0431\u043E\u0439", "Anti-censorship suite");
-        m.tabbed = true;
         var I = getInfo();
 
-        /* ─── Dashboard ─── */
-        var s = m.section(form.TypedSection, "proboy", "\u041F\u0430\u043D\u0435\u043B\u044C \u0443\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u044F");
-        s.anonymous = true; s.addremove = false;
-        s.cfgsections = function() { return ["main"]; };
+        var s = m.section(form.TypedSection, "proboy", "\u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438 Proboy");
+        s.anonymous = true;
+        s.addremove = false;
 
-        var o = s.option(form.Value, "_os", "\u041E\u0421");
+        /* ─── Dashboard Tab ─── */
+        var t1 = s.tab("dashboard", "\u041F\u0430\u043D\u0435\u043B\u044C");
+
+        var o = t1.option(form.Value, "_os", "\u041E\u0421");
         o.readonly = true; o.cfgvalue = function() { return I.os || "?"; };
 
-        o = s.option(form.Value, "_model", "\u0420\u043E\u0443\u0442\u0435\u0440");
+        o = t1.option(form.Value, "_model", "\u0420\u043E\u0443\u0442\u0435\u0440");
         o.readonly = true; o.cfgvalue = function() { return I.model || "?"; };
 
-        o = s.option(form.Value, "_cpu", "CPU");
+        o = t1.option(form.Value, "_cpu", "CPU");
         o.readonly = true; o.cfgvalue = function() { return (I.cpu||"?") + " (" + I.cores + " cores)"; };
 
-        o = s.option(form.Value, "_ram", "RAM");
+        o = t1.option(form.Value, "_ram", "RAM");
         o.readonly = true; o.cfgvalue = function() { return I.ram || "?"; };
 
-        o = s.option(form.Value, "_flash", "Flash");
+        o = t1.option(form.Value, "_flash", "Flash");
         o.readonly = true; o.cfgvalue = function() { return I.flash || "?"; };
 
-        o = s.option(form.Value, "_arch", "Arch");
-        o.readonly = true; o.cfgvalue = function() { return I.arch || "?"; };
-
-        o = s.option(form.Value, "_ver", "\u0412\u0435\u0440\u0441\u0438\u044F");
+        o = t1.option(form.Value, "_ver", "\u0412\u0435\u0440\u0441\u0438\u044F");
         o.readonly = true; o.cfgvalue = function() { return I.ver || "?"; };
 
-        o = s.option(form.Value, "_uptime", "Uptime");
+        o = t1.option(form.Value, "_uptime", "Uptime");
         o.readonly = true; o.cfgvalue = function() { return I.uptime || "?"; };
 
-        /* ─── Zapret ─── */
-        s = m.section(form.TypedSection, "proboy", "Zapret");
-        s.anonymous = true; s.addremove = false;
-        s.cfgsections = function() { return ["main"]; };
+        /* ─── Zapret Tab ─── */
+        var t2 = s.tab("zapret", "Zapret");
 
-        o = s.option(form.Flag, "zapret_enabled", "\u0412\u043A\u043B\u044E\u0447\u0438\u0442\u044C Zapret");
+        o = t2.option(form.Flag, "zapret_enabled", "\u0412\u043A\u043B\u044E\u0447\u0438\u0442\u044C Zapret");
         o.default = "1"; o.rmempty = false;
 
-        o = s.option(form.ListValue, "zapret_strategy", "\u0421\u0442\u0440\u0430\u0442\u0435\u0433\u0438\u044F");
+        o = t2.option(form.ListValue, "zapret_strategy", "\u0421\u0442\u0440\u0430\u0442\u0435\u0433\u0438\u044F");
         [["auto","\u0410\u0432\u0442\u043E"],["general","\u041E\u0431\u0449\u0430\u044F"],["general-alt","\u041E\u0431\u0449\u0430\u044F ALT"],["fake-tls-auto","FAKE TLS AUTO"],["fake-tls-auto-alt","FAKE TLS AUTO ALT"],["simple-fake","SIMPLE FAKE"],["discord","Discord"],["youtube","YouTube"],["telegram","Telegram"],["gaming","\u0418\u0433\u0440\u044B"],["fortnite","Fortnite"],["cs2","CS2"],["psn","PlayStation Network"],["steam","Steam"],["epic","Epic Games"],["alt1","ALT 1"],["alt2","ALT 2"],["alt3","ALT 3"],["alt4","ALT 4"],["alt5","ALT 5"],["alt6","ALT 6"],["alt7","ALT 7"],["alt8","ALT 8"],["alt9","ALT 9"],["alt10","ALT 10"],["alt11","ALT 11"],["alt12","ALT 12"],["aggressive","\u0410\u0433\u0440\u0435\u0441\u0441\u0438\u0432\u043D\u0430\u044F"]].forEach(function(x){o.value(x[0],x[1]);});
         o.default = "auto";
 
-        o = s.option(form.Flag, "failover_enabled", "Failover");
+        o = t2.option(form.Flag, "failover_enabled", "Failover");
         o.default = "1"; o.rmempty = false;
 
-        /* ─── Games ─── */
-        s = m.section(form.TypedSection, "proboy", "\u0418\u0433\u0440\u044B");
-        s.anonymous = true; s.addremove = false;
-        s.cfgsections = function() { return ["main"]; };
+        /* ─── Games Tab ─── */
+        var t3 = s.tab("games", "\u0418\u0433\u0440\u044B");
 
-        o = s.option(form.Flag, "gamefilter_enabled", "\u0412\u043A\u043B\u044E\u0447\u0438\u0442\u044C Game Filter");
+        o = t3.option(form.Flag, "gamefilter_enabled", "\u0412\u043A\u043B\u044E\u0447\u0438\u0442\u044C Game Filter");
         o.default = "1"; o.rmempty = false;
 
-        o = s.option(form.ListValue, "gamefilter_mode", "\u0420\u0435\u0436\u0438\u043C");
-        o.value("universal", "\u0423\u043D\u0438\u0432\u0435\u0440\u0441\u0430\u043B\u044C\u043D\u044B\u0439 \u2014 \u0432\u0441\u0435 \u0438\u0433\u0440\u044B");
+        o = t3.option(form.ListValue, "gamefilter_mode", "\u0420\u0435\u0436\u0438\u043C");
+        o.value("universal", "\u0423\u043D\u0438\u0432\u0435\u0440\u0441\u0430\u043B\u044C\u043D\u044B\u0439");
         o.value("custom", "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C\u0441\u043A\u0438\u0439");
         o.default = "universal";
 
-        o = s.option(form.Flag, "ps5_enabled", "PS5 \u0410\u0432\u0442\u043E\u043E\u043F\u0440\u0435\u0434\u0435\u043B\u0435\u043D\u0438\u0435");
+        o = t3.option(form.Flag, "ps5_enabled", "PS5 \u0410\u0432\u0442\u043E\u043E\u043F\u0440\u0435\u0434\u0435\u043B\u0435\u043D\u0438\u0435");
         o.default = "0"; o.rmempty = false;
 
-        /* ─── Network ─── */
-        s = m.section(form.TypedSection, "proboy", "\u0421\u0435\u0442\u044C");
-        s.anonymous = true; s.addremove = false;
-        s.cfgsections = function() { return ["main"]; };
+        /* ─── Network Tab ─── */
+        var t4 = s.tab("network", "\u0421\u0435\u0442\u044C");
 
-        o = s.option(form.Flag, "dns_enabled", "\u0412\u043A\u043B\u044E\u0447\u0438\u0442\u044C DNS Bypass");
+        o = t4.option(form.Flag, "dns_enabled", "\u0412\u043A\u043B\u044E\u0447\u0438\u0442\u044C DNS Bypass");
         o.default = "1"; o.rmempty = false;
 
-        o = s.option(form.ListValue, "dns_provider", "DNS \u041F\u0440\u043E\u0432\u0430\u0439\u0434\u0435\u0440");
+        o = t4.option(form.ListValue, "dns_provider", "DNS \u041F\u0440\u043E\u0432\u0430\u0439\u0434\u0435\u0440");
         o.value("cloudflare", "Cloudflare (1.1.1.1)");
         o.value("google", "Google (8.8.8.8)");
         o.value("adguard", "AdGuard");
         o.default = "cloudflare";
 
-        o = s.option(form.Flag, "youtube_enabled", "\u041E\u043F\u0442\u0438\u043C\u0438\u0437\u0430\u0442\u043E\u0440 YouTube");
+        o = t4.option(form.Flag, "youtube_enabled", "\u041E\u043F\u0442\u0438\u043C\u0438\u0437\u0430\u0442\u043E\u0440 YouTube");
         o.default = "1"; o.rmempty = false;
 
-        o = s.option(form.Flag, "ipv6_enabled", "IPv6 Bypass");
+        o = t4.option(form.Flag, "ipv6_enabled", "IPv6 Bypass");
         o.default = "0"; o.rmempty = false;
 
-        o = s.option(form.Value, "_lan", "LAN IP");
+        o = t4.option(form.Value, "_lan", "LAN IP");
         o.readonly = true; o.cfgvalue = function() { return I.ip || "?"; };
 
-        o = s.option(form.Value, "_gw", "Gateway");
+        o = t4.option(form.Value, "_gw", "Gateway");
         o.readonly = true; o.cfgvalue = function() { return I.gw || "?"; };
 
-        o = s.option(form.Value, "_dns", "DNS");
+        o = t4.option(form.Value, "_dns", "DNS");
         o.readonly = true; o.cfgvalue = function() { return I.dns || "?"; };
 
-        /* ─── Subscriptions ─── */
-        s = m.section(form.TypedSection, "proboy", "\u041F\u043E\u0434\u043F\u0438\u0441\u043A\u0438");
-        s.anonymous = true; s.addremove = false;
-        s.cfgsections = function() { return ["main"]; };
+        /* ─── Subscriptions Tab ─── */
+        var t5 = s.tab("subs", "\u041F\u043E\u0434\u043F\u0438\u0441\u043A\u0438");
 
-        o = s.option(form.Value, "subscription_url", "URL \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0438");
+        o = t5.option(form.Value, "subscription_url", "URL \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0438");
         o.placeholder = "https://...";
         o.rmempty = true;
 
-        /* ─── Settings ─── */
-        s = m.section(form.TypedSection, "proboy", "\u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438");
-        s.anonymous = true; s.addremove = false;
-        s.cfgsections = function() { return ["main"]; };
+        /* ─── Settings Tab ─── */
+        var t6 = s.tab("settings", "\u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438");
 
-        o = s.option(form.Flag, "enabled", "\u0412\u043A\u043B\u044E\u0447\u0438\u0442\u044C Proboy");
+        o = t6.option(form.Flag, "enabled", "\u0412\u043A\u043B\u044E\u0447\u0438\u0442\u044C Proboy");
         o.default = "1"; o.rmempty = false;
 
-        o = s.option(form.ListValue, "language", "\u042F\u0437\u044B\u043A");
+        o = t6.option(form.ListValue, "language", "\u042F\u0437\u044B\u043A");
         o.value("ru", "\u0420\u0443\u0441\u0441\u043A\u0438\u0439");
         o.value("en", "English");
         o.default = "ru";
 
-        o = s.option(form.Flag, "web_enabled", "\u0412\u043A\u043B\u044E\u0447\u0438\u0442\u044C \u0432\u0435\u0431-\u043F\u0430\u043D\u0435\u043B\u044C");
+        o = t6.option(form.Flag, "web_enabled", "\u0412\u043A\u043B\u044E\u0447\u0438\u0442\u044C \u0432\u0435\u0431-\u043F\u0430\u043D\u0435\u043B\u044C");
         o.default = "1"; o.rmempty = false;
 
-        o = s.option(form.Value, "web_port", "\u041F\u043E\u0440\u0442");
+        o = t6.option(form.Value, "web_port", "\u041F\u043E\u0440\u0442");
         o.datatype = "port";
         o.default = "8080";
 
