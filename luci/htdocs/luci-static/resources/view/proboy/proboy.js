@@ -7,11 +7,8 @@
 window.doProboyAction = function(action) {
     var el = document.getElementById("proboy-result");
     if (el) { el.style.display = "block"; el.textContent = action + "..."; }
-    fs.exec("/etc/init.d/proboy", [action]).then(function() {
-        setTimeout(function() { window.location.reload(); }, 2000);
-    }).catch(function(e) {
-        if (el) el.textContent = "Error: " + e.message;
-    });
+    setTimeout(function() { window.location.reload(); }, 3000);
+    fs.exec("/etc/init.d/proboy", [action]).catch(function() {});
 };
 
 async function checkRunning(name) {
