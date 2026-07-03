@@ -327,21 +327,22 @@ install_service() {
     if [ "${OS}" = "openwrt" ]; then
         cat > /etc/init.d/proboy << 'SVCEOF'
 #!/bin/sh /etc/rc.common
+# Proboy x FreeLink — OpenWrt Service
 START=99
 STOP=10
 
 start() {
-    if [ -f /etc/proboy/proboy.conf ]; then
-        . /etc/proboy/proboy.conf
-        if [ "${enabled}" != "1" ]; then
-            echo "Proboy disabled"
-            return
-        fi
+    [ -f /etc/proboy/proboy.conf ] && . /etc/proboy/proboy.conf
+    if [ "${enabled}" != "1" ]; then
+        echo "Proboy: disabled in config"
+        return 0
     fi
+    echo "Proboy: starting services..."
     /opt/proboy/scripts/proboy.sh start
 }
 
 stop() {
+    echo "Proboy: stopping services..."
     /opt/proboy/scripts/proboy.sh stop
 }
 
@@ -349,6 +350,18 @@ restart() {
     stop
     sleep 1
     start
+}
+
+status() {
+    if [ -f /var/run/proboy/zapret.pid ]; then
+        local pid=$(cat /var/run/proboy/zapret.pid 2>/dev/null)
+        if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+            echo "Proboy: running (PID: $pid)"
+            return 0
+        fi
+    fi
+    echo "Proboy: stopped"
+    return 1
 }
 SVCEOF
         chmod +x /etc/init.d/proboy
