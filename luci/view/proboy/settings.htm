@@ -1,0 +1,14 @@
+<%+header%>
+
+<h2><%:Settings%></h2>
+
+<div class="cbi-section">
+    <h3><%:General Settings%></h3>
+    <div class="cbi-section-node">
+        <p><%:Configure Proboy general options%></p>
+        <br/>
+        <p><a href="http://<%=luci.http.getenv("SERVER_NAME") or "192.168.1.1"%>:8080/" target="_blank"><%:Open Web Panel for Settings%></a></p>
+    </div>
+</div>
+
+<%+footer%>

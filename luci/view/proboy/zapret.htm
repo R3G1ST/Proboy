@@ -1,0 +1,15 @@
+<%+header%>
+
+<h2><%:Zapret Settings%></h2>
+
+<div class="cbi-section">
+    <h3><%:Strategy%></h3>
+    <div class="cbi-section-node">
+        <p><%:Current strategy is set in /etc/proboy/proboy.conf%></p>
+        <p><%:Edit the config file directly or use the Web Panel for advanced settings.%></p>
+        <br/>
+        <p><a href="http://<%=luci.http.getenv("SERVER_NAME") or "192.168.1.1"%>:8080/" target="_blank"><%:Open Web Panel for Zapret settings%></a></p>
+    </div>
+</div>
+
+<%+footer%>
