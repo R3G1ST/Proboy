@@ -478,42 +478,32 @@ set_permissions() {
 install_luci() {
     step "Installing LuCI integration..."
 
-    if [ ! -d /www/luci-static/resources ]; then
+    if [ ! -d /www/luci-static/resources ] && [ ! -d /usr/lib/lua/luci ]; then
         warn "LuCI not found, skipping integration"
         return
     fi
 
-    # Menu entry
-    mkdir -p /usr/share/luci/menu.d
-    dl "${REPO}/luci/root/usr/share/luci/menu.d/proboy.json" /usr/share/luci/menu.d/proboy.json 2>/dev/null || true
+    # Remove old JSON files
+    rm -f /usr/share/luci/menu.d/proboy.json
+    rm -f /usr/share/rpcd/acl.d/proboy.json
 
-    # Views
-    mkdir -p /www/luci-static/resources/view/proboy
+    # Lua controller
+    mkdir -p /usr/lib/lua/luci/controller
+    dl "${REPO}/luci/controller/proboy.lua" /usr/lib/lua/luci/controller/proboy.lua 2>/dev/null || true
+
+    # HTM templates
+    mkdir -p /usr/lib/lua/luci/view/proboy
     for f in status zapret games network subs settings; do
-        dl "${REPO}/luci/view/proboy/${f}.js" "/www/luci-static/resources/view/proboy/${f}.js" 2>/dev/null || true
+        dl "${REPO}/luci/view/proboy/${f}.htm" "/usr/lib/lua/luci/view/proboy/${f}.htm" 2>/dev/null || true
     done
 
-    # ACL
-    mkdir -p /usr/share/rpcd/acl.d
-    dl "${REPO}/luci/root/usr/share/rpcd/acl.d/proboy.json" /usr/share/rpcd/acl.d/proboy.json 2>/dev/null || true
-
-    # RPC handler
-    mkdir -p /usr/libexec/rpcd
-    dl "${REPO}/luci/root/usr/libexec/rpcd/luci.proboy" /usr/libexec/rpcd/luci.proboy 2>/dev/null || true
-    chmod +x /usr/libexec/rpcd/luci.proboy 2>/dev/null || true
-
-    # UCI config
-    if [ ! -f /etc/config/proboy ]; then
-        dl "${REPO}/luci/root/etc/config/proboy" /etc/config/proboy 2>/dev/null || true
-    fi
-
     # Fix permissions
-    chmod 644 /usr/share/luci/menu.d/proboy.json 2>/dev/null || true
-    chmod 644 /www/luci-static/resources/view/proboy/*.js 2>/dev/null || true
-    chmod 644 /usr/share/rpcd/acl.d/proboy.json 2>/dev/null || true
+    chmod 644 /usr/lib/lua/luci/controller/proboy.lua 2>/dev/null || true
+    chmod 644 /usr/lib/lua/luci/view/proboy/*.htm 2>/dev/null || true
 
-    # Restart rpcd
-    /etc/init.d/rpcd restart 2>/dev/null || true
+    # Clear LuCI cache
+    rm -f /tmp/luci-indexcache
+    rm -rf /tmp/luci-compilecache
 
     ok "LuCI integration installed"
 }
