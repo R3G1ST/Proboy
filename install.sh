@@ -492,11 +492,17 @@ install_luci() {
     mkdir -p /usr/share/rpcd/acl.d
     dl "${REPO}/luci/root/usr/share/rpcd/acl.d/luci-app-proboy.json" /usr/share/rpcd/acl.d/luci-app-proboy.json 2>/dev/null || true
 
-    # Install JS view files
+    # Install JS view file (single file with all tabs)
     mkdir -p /www/luci-static/resources/view/proboy
-    for f in proboy dashboard combo zapret games network subs settings; do
-        dl "${REPO}/luci/htdocs/luci-static/resources/view/proboy/${f}.js" "/www/luci-static/resources/view/proboy/${f}.js" 2>/dev/null || true
-    done
+    # Remove old separate files
+    rm -f /www/luci-static/resources/view/proboy/dashboard.js 2>/dev/null || true
+    rm -f /www/luci-static/resources/view/proboy/combo.js 2>/dev/null || true
+    rm -f /www/luci-static/resources/view/proboy/zapret.js 2>/dev/null || true
+    rm -f /www/luci-static/resources/view/proboy/games.js 2>/dev/null || true
+    rm -f /www/luci-static/resources/view/proboy/network.js 2>/dev/null || true
+    rm -f /www/luci-static/resources/view/proboy/subs.js 2>/dev/null || true
+    rm -f /www/luci-static/resources/view/proboy/settings.js 2>/dev/null || true
+    dl "${REPO}/luci/htdocs/luci-static/resources/view/proboy/proboy.js" /www/luci-static/resources/view/proboy/proboy.js 2>/dev/null || true
 
     # Create UCI config if not exists
     if [ ! -f /etc/config/proboy ]; then
