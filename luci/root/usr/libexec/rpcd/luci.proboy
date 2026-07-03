@@ -1,0 +1,76 @@
+#!/bin/sh
+# Proboy RPC handler for LuCI
+
+. /usr/libexec/luci-rpcd.sh 2>/dev/null
+
+case "$1" in
+    status)
+        # Read config
+        . /etc/proboy/proboy.conf 2>/dev/null
+
+        running="false"
+        zapret="false"
+        singbox="false"
+        gamefilter="false"
+        dns="false"
+
+        # Check zapret
+        if [ -f /var/run/proboy/zapret.pid ]; then
+            pid=$(cat /var/run/proboy/zapret.pid 2>/dev/null)
+            [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null && zapret="true" && running="true"
+        fi
+
+        # Check sing-box
+        if [ -f /var/run/proboy/singbox.pid ]; then
+            pid=$(cat /var/run/proboy/singbox.pid 2>/dev/null)
+            [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null && singbox="true" && running="true"
+        fi
+
+        # Check config flags
+        [ "${gamefilter_enabled}" = "1" ] && gamefilter="true"
+        [ "${dns_enabled}" = "1" ] && dns="true"
+
+        # Get version
+        version="unknown"
+        [ -f /opt/proboy/VERSION ] && version=$(cat /opt/proboy/VERSION 2>/dev/null)
+
+        cat << EOF
+{
+    "running": $running,
+    "zapret": $zapret,
+    "singbox": $singbox,
+    "gamefilter": $gamefilter,
+    "dns": $dns,
+    "strategy": "${zapret_strategy:-auto}",
+    "dns_provider": "${dns_provider:-cloudflare}",
+    "version": "$version"
+}
+EOF
+        ;;
+
+    start)
+        /etc/init.d/proboy start >/dev/null 2>&1
+        echo '{"ok":true,"message":"Proboy started"}'
+        ;;
+
+    stop)
+        /etc/init.d/proboy stop >/dev/null 2>&1
+        echo '{"ok":true,"message":"Proboy stopped"}'
+        ;;
+
+    restart)
+        /etc/init.d/proboy restart >/dev/null 2>&1
+        echo '{"ok":true,"message":"Proboy restarted"}'
+        ;;
+
+    update)
+        # Run update in background
+        nohup /opt/proboy/update.sh >/tmp/proboy-update.log 2>&1 &
+        echo '{"ok":true,"message":"Update started in background"}'
+        ;;
+
+    *)
+        echo '{"error":"unknown method"}'
+        exit 1
+        ;;
+esac

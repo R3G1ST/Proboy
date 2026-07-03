@@ -8,18 +8,28 @@
         },
         "children": {
             "status": {
-                "title": "Status",
-                "action": {
-                    "type": "view",
-                    "path": "proboy/status"
-                }
+                "title": "Dashboard",
+                "action": { "type": "view", "path": "proboy/status" }
+            },
+            "zapret": {
+                "title": "Zapret",
+                "action": { "type": "view", "path": "proboy/zapret" }
+            },
+            "games": {
+                "title": "Games",
+                "action": { "type": "view", "path": "proboy/games" }
+            },
+            "network": {
+                "title": "Network",
+                "action": { "type": "view", "path": "proboy/network" }
+            },
+            "subs": {
+                "title": "Subscriptions",
+                "action": { "type": "view", "path": "proboy/subs" }
             },
             "settings": {
                 "title": "Settings",
-                "action": {
-                    "type": "view",
-                    "path": "proboy/settings"
-                }
+                "action": { "type": "view", "path": "proboy/settings" }
             }
         }
     }
