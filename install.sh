@@ -480,12 +480,11 @@ install_luci() {
 
     # Remove old broken files
     rm -f /usr/share/luci/menu.d/proboy.json 2>/dev/null || true
-    rm -f /usr/share/luci/menu.d/luci-app-proboy.json 2>/dev/null || true
     rm -f /usr/share/rpcd/acl.d/proboy.json 2>/dev/null || true
     rm -rf /usr/lib/lua/luci/controller/proboy.lua 2>/dev/null || true
     rm -rf /usr/lib/lua/luci/view/proboy/ 2>/dev/null || true
 
-    # Install JSON menu entry (like podkop)
+    # Install JSON menu entry
     mkdir -p /usr/share/luci/menu.d
     dl "${REPO}/luci/root/usr/share/luci/menu.d/luci-app-proboy.json" /usr/share/luci/menu.d/luci-app-proboy.json 2>/dev/null || true
 
@@ -493,14 +492,38 @@ install_luci() {
     mkdir -p /usr/share/rpcd/acl.d
     dl "${REPO}/luci/root/usr/share/rpcd/acl.d/luci-app-proboy.json" /usr/share/rpcd/acl.d/luci-app-proboy.json 2>/dev/null || true
 
-    # Install JS view files (like podkop)
+    # Install JS view files
     mkdir -p /www/luci-static/resources/view/proboy
-    dl "${REPO}/luci/htdocs/luci-static/resources/view/proboy/proboy.js" /www/luci-static/resources/view/proboy/proboy.js 2>/dev/null || true
+    for f in proboy dashboard combo zapret games network subs settings; do
+        dl "${REPO}/luci/htdocs/luci-static/resources/view/proboy/${f}.js" "/www/luci-static/resources/view/proboy/${f}.js" 2>/dev/null || true
+    done
+
+    # Create UCI config if not exists
+    if [ ! -f /etc/config/proboy ]; then
+        cat > /etc/config/proboy << 'UCIEOF'
+config proboy 'main'
+    option enabled '1'
+    option language 'ru'
+    option zapret_enabled '1'
+    option zapret_strategy 'auto'
+    option gamefilter_enabled '1'
+    option gamefilter_mode 'universal'
+    option ps5_enabled '0'
+    option dns_enabled '1'
+    option dns_provider 'cloudflare'
+    option youtube_enabled '1'
+    option ipv6_enabled '0'
+    option failover_enabled '1'
+    option subscription_url ''
+    option web_enabled '1'
+    option web_port '8080'
+UCIEOF
+    fi
 
     # Fix permissions
     chmod 644 /usr/share/luci/menu.d/luci-app-proboy.json 2>/dev/null || true
     chmod 644 /usr/share/rpcd/acl.d/luci-app-proboy.json 2>/dev/null || true
-    chmod 644 /www/luci-static/resources/view/proboy/proboy.js 2>/dev/null || true
+    chmod 644 /www/luci-static/resources/view/proboy/*.js 2>/dev/null || true
 
     # Clear LuCI cache
     rm -f /tmp/luci-indexcache 2>/dev/null || true

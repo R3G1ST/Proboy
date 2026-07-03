@@ -73,12 +73,8 @@ fi
 
 # Remove LuCI integration
 echo "[>>] Removing LuCI integration..."
-rm -f /usr/share/luci/menu.d/proboy.json
 rm -f /usr/share/luci/menu.d/luci-app-proboy.json
-rm -f /usr/share/rpcd/acl.d/proboy.json
 rm -f /usr/share/rpcd/acl.d/luci-app-proboy.json
-rm -rf /usr/lib/lua/luci/controller/proboy.lua
-rm -rf /usr/lib/lua/luci/view/proboy
 rm -rf /www/luci-static/resources/view/proboy
 
 # Clear LuCI cache

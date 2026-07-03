@@ -4,7 +4,15 @@
         "read": {
             "file": {
                 "/etc/init.d/proboy": ["exec"],
-                "/opt/proboy/scripts/proboy.sh": ["exec"]
+                "/opt/proboy/scripts/proboy.sh": ["exec"],
+                "/opt/proboy/VERSION": ["read"],
+                "/proc/cpuinfo": ["read"],
+                "/proc/meminfo": ["read"],
+                "/proc/uptime": ["read"],
+                "/tmp/resolv.conf": ["read"],
+                "/tmp/resolv.conf.d/resolv.conf.auto": ["read"],
+                "/tmp/sysinfo/model": ["read"],
+                "/etc/openwrt_release": ["read"]
             },
             "ubus": {
                 "service": ["list"]
@@ -12,7 +20,10 @@
             "uci": ["proboy"]
         },
         "write": {
-            "uci": ["proboy"]
+            "uci": ["proboy"],
+            "file": {
+                "/etc/init.d/proboy": ["exec"]
+            }
         }
     }
 }
