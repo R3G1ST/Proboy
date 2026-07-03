@@ -12,7 +12,7 @@ function isRunning(name) {
     return false;
 }
 
-function I() {
+function getSystemInfo() {
     var R = {};
     try { var m = fs.read("/proc/meminfo"); if (m) { var x = m.match(/MemTotal:\s+(\d+)/); if (x) R.ram = Math.round(parseInt(x[1])/1024)+" MB"; } } catch(e) {}
     try { var d = fs.exec("/bin/df",["-m","/"]); if (d.stdout) { var p = d.stdout.split("\n")[1].split(/\s+/); R.flash = p[3]+" MB free"; } } catch(e) {}
@@ -32,7 +32,7 @@ function I() {
 return view.extend({
     render: function() {
         var m = new form.Map("proboy", "\u041F\u0440\u043E\u0431\u043E\u0439", "Anti-censorship suite");
-        var I = getInfo();
+        var info = getSystemInfo();
 
         var s = m.section(form.TypedSection, "proboy", "\u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438 Proboy");
         s.anonymous = true;
@@ -42,25 +42,25 @@ return view.extend({
         var t1 = s.tab("dashboard", "\u041F\u0430\u043D\u0435\u043B\u044C");
 
         var o = t1.option(form.Value, "_os", "\u041E\u0421");
-        o.readonly = true; o.cfgvalue = function() { return I.os || "?"; };
+        o.readonly = true; o.cfgvalue = function() { return info.os || "?"; };
 
         o = t1.option(form.Value, "_model", "\u0420\u043E\u0443\u0442\u0435\u0440");
-        o.readonly = true; o.cfgvalue = function() { return I.model || "?"; };
+        o.readonly = true; o.cfgvalue = function() { return info.model || "?"; };
 
         o = t1.option(form.Value, "_cpu", "CPU");
-        o.readonly = true; o.cfgvalue = function() { return (I.cpu||"?") + " (" + I.cores + " cores)"; };
+        o.readonly = true; o.cfgvalue = function() { return (info.cpu||"?") + " (" + info.cores + " cores)"; };
 
         o = t1.option(form.Value, "_ram", "RAM");
-        o.readonly = true; o.cfgvalue = function() { return I.ram || "?"; };
+        o.readonly = true; o.cfgvalue = function() { return info.ram || "?"; };
 
         o = t1.option(form.Value, "_flash", "Flash");
-        o.readonly = true; o.cfgvalue = function() { return I.flash || "?"; };
+        o.readonly = true; o.cfgvalue = function() { return info.flash || "?"; };
 
         o = t1.option(form.Value, "_ver", "\u0412\u0435\u0440\u0441\u0438\u044F");
-        o.readonly = true; o.cfgvalue = function() { return I.ver || "?"; };
+        o.readonly = true; o.cfgvalue = function() { return info.ver || "?"; };
 
         o = t1.option(form.Value, "_uptime", "Uptime");
-        o.readonly = true; o.cfgvalue = function() { return I.uptime || "?"; };
+        o.readonly = true; o.cfgvalue = function() { return info.uptime || "?"; };
 
         /* ─── Zapret Tab ─── */
         var t2 = s.tab("zapret", "Zapret");
@@ -108,13 +108,13 @@ return view.extend({
         o.default = "0"; o.rmempty = false;
 
         o = t4.option(form.Value, "_lan", "LAN IP");
-        o.readonly = true; o.cfgvalue = function() { return I.ip || "?"; };
+        o.readonly = true; o.cfgvalue = function() { return info.ip || "?"; };
 
         o = t4.option(form.Value, "_gw", "Gateway");
-        o.readonly = true; o.cfgvalue = function() { return I.gw || "?"; };
+        o.readonly = true; o.cfgvalue = function() { return info.gw || "?"; };
 
         o = t4.option(form.Value, "_dns", "DNS");
-        o.readonly = true; o.cfgvalue = function() { return I.dns || "?"; };
+        o.readonly = true; o.cfgvalue = function() { return info.dns || "?"; };
 
         /* ─── Subscriptions Tab ─── */
         var t5 = s.tab("subs", "\u041F\u043E\u0434\u043F\u0438\u0441\u043A\u0438");
