@@ -144,13 +144,15 @@ install_deps() {
         command -v "$cmd" >/dev/null 2>&1 || NEED="${NEED} ${cmd}"
     done
     command -v nft >/dev/null 2>&1 || command -v iptables >/dev/null 2>&1 || NEED="${NEED} nftables"
+    # uhttpd for web panel
+    command -v uhttpd >/dev/null 2>&1 || NEED="${NEED} uhttpd"
 
     if [ -n "${NEED}" ]; then
         warn "Missing:${NEED}"
         case "${PKG}" in
-            apk)  ${PKG_I} curl wget tar gzip ip-full nftables 2>/dev/null || true ;;
-            opkg) ${PKG_I} curl wget tar gzip ip-full nftables iptables 2>/dev/null || true ;;
-            apt)  ${PKG_I} curl wget tar gzip iproute2 nftables 2>/dev/null || true ;;
+            apk)  ${PKG_I} curl wget tar gzip ip-full nftables uhttpd 2>/dev/null || true ;;
+            opkg) ${PKG_I} curl wget tar gzip ip-full nftables iptables uhttpd 2>/dev/null || true ;;
+            apt)  ${PKG_I} curl wget tar gzip iproute2 nftables uhttpd 2>/dev/null || true ;;
         esac
     fi
     ok "Dependencies ready"
