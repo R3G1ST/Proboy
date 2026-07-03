@@ -5,7 +5,7 @@
 "require uci";
 
 window.doProboyAction = function(action) {
-    var el = document.getElementById("proboy-action-result");
+    var el = document.getElementById("proboy-result");
     if (el) { el.style.display = "block"; el.textContent = action + "..."; }
     fs.exec("/etc/init.d/proboy", [action]).then(function() {
         setTimeout(function() { window.location.reload(); }, 2000);
@@ -183,6 +183,28 @@ return view.extend({
         o = s.taboption("settings", form.Value, "web_port", "\u041F\u043E\u0440\u0442");
         o.datatype = "port"; o.default = "8080";
 
-        return m.render();
+        return m.render().then(function(mapEl) {
+            var tabs = mapEl.querySelectorAll('.cbi-value-tab-content');
+            var zapretTab = null;
+            for (var i = 0; i < tabs.length; i++) {
+                var lbl = tabs[i].getAttribute('data-tab-title') || '';
+                if (lbl === 'Zapret') { zapretTab = tabs[i]; break; }
+            }
+            if (!zapretTab) {
+                var containers = mapEl.querySelectorAll('[data-tab]');
+                for (var j = 0; j < containers.length; j++) {
+                    if (containers[j].getAttribute('data-tab') === 'zapret') {
+                        zapretTab = containers[j]; break;
+                    }
+                }
+            }
+            if (zapretTab) {
+                var d = document.createElement('div');
+                d.className = 'cbi-value';
+                d.innerHTML = '<div class="cbi-value-title">\u0423\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u0435</div><div class="cbi-value-field"><input type="button" class="cbi-button cbi-button-apply" value="\u0417\u0430\u043F\u0443\u0441\u0442\u0438\u0442\u044C" onclick="doProboyAction(\'start\')" /> <input type="button" class="cbi-button cbi-button-reset" value="\u041E\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u0442\u044C" onclick="doProboyAction(\'stop\')" /> <input type="button" class="cbi-button cbi-button-apply" value="\u041F\u0435\u0440\u0435\u0437\u0430\u043F\u0443\u0441\u0442\u0438\u0442\u044C" onclick="doProboyAction(\'restart\')" /><div id="proboy-result" style="display:none;padding:8px;border-radius:4px;background:#e8f5e9;margin-top:8px"></div></div>';
+                zapretTab.appendChild(d);
+            }
+            return mapEl;
+        });
     }
 });
