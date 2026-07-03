@@ -161,20 +161,37 @@ install_deps() {
 install_binaries() {
     step "Installing binaries..."
     ARCH="$(uname -m)"
+    mkdir -p "${DIR}/bin"
 
     if [ ! -f "${DIR}/bin/nfqws" ]; then
         step "[1/3] Downloading zapret..."
         dl "https://github.com/bol-van/zapret/releases/download/v72.12/zapret-v72.12.tar.gz" /tmp/zapret.tar.gz
         if [ -f /tmp/zapret.tar.gz ]; then
             tar -xzf /tmp/zapret.tar.gz -C /tmp/ 2>/dev/null
-            # Find nfqws anywhere in extracted files
-            NFQWS_FOUND=$(find /tmp/zapret* -name "nfqws" -type f 2>/dev/null | head -1)
-            TPWS_FOUND=$(find /tmp/zapret* -name "tpws" -type f 2>/dev/null | head -1)
+            # Find nfqws - prefer linux-arm64 for aarch64, linux-arm for armv7l, etc.
+            NFQWS_FOUND=""
+            case "${ARCH}" in
+                aarch64) NFQWS_FOUND=$(find /tmp/zapret* -path "*/linux-arm64/nfqws" -type f 2>/dev/null | head -1) ;;
+                armv7l)  NFQWS_FOUND=$(find /tmp/zapret* -path "*/linux-arm/nfqws" -type f 2>/dev/null | head -1) ;;
+                x86_64)  NFQWS_FOUND=$(find /tmp/zapret* -path "*/linux-x86_64/nfqws" -type f 2>/dev/null | head -1) ;;
+                *)       NFQWS_FOUND=$(find /tmp/zapret* -path "*/linux-x86_64/nfqws" -type f 2>/dev/null | head -1) ;;
+            esac
+            # Fallback: any nfqws
+            [ -z "${NFQWS_FOUND}" ] && NFQWS_FOUND=$(find /tmp/zapret* -name "nfqws" -type f 2>/dev/null | head -1)
+
+            TPWS_FOUND=""
+            case "${ARCH}" in
+                aarch64) TPWS_FOUND=$(find /tmp/zapret* -path "*/linux-arm64/tpws" -type f 2>/dev/null | head -1) ;;
+                armv7l)  TPWS_FOUND=$(find /tmp/zapret* -path "*/linux-arm/tpws" -type f 2>/dev/null | head -1) ;;
+                x86_64)  TPWS_FOUND=$(find /tmp/zapret* -path "*/linux-x86_64/tpws" -type f 2>/dev/null | head -1) ;;
+                *)       TPWS_FOUND=$(find /tmp/zapret* -path "*/linux-x86_64/tpws" -type f 2>/dev/null | head -1) ;;
+            esac
+            [ -z "${TPWS_FOUND}" ] && TPWS_FOUND=$(find /tmp/zapret* -name "tpws" -type f 2>/dev/null | head -1)
+
             if [ -n "${NFQWS_FOUND}" ]; then
-                cp "${NFQWS_FOUND}" "${DIR}/bin/nfqws"
-                [ -n "${TPWS_FOUND}" ] && cp "${TPWS_FOUND}" "${DIR}/bin/tpws"
+                cp "${NFQWS_FOUND}" "${DIR}/bin/nfqws" && ok "zapret installed" || warn "Failed to copy nfqws"
+                [ -n "${TPWS_FOUND}" ] && cp "${TPWS_FOUND}" "${DIR}/bin/tpws" 2>/dev/null || true
                 chmod +x "${DIR}/bin/nfqws" "${DIR}/bin/tpws" 2>/dev/null || true
-                ok "zapret installed"
             else
                 warn "nfqws not found in archive"
             fi
