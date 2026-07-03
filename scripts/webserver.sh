@@ -1,6 +1,6 @@
 #!/bin/sh
 # ═══════════════════════════════════════════════════════
-# Proboy Web Server — uhttpd (OpenWrt) + CGI API
+# Proboy Web Server — uhttpd or CGI-capable server
 # ═══════════════════════════════════════════════════════
 
 WEB_DIR="/opt/proboy/web"
@@ -11,7 +11,6 @@ CONFIG_DIR="/etc/proboy"
 PORT="${web_port:-8080}"
 HTTPD_PID="${PID_DIR}/webserver.pid"
 UCI_CONF="/etc/config/uhttpd"
-SECTION="proboy"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -44,7 +43,6 @@ get_ip() {
 }
 
 stop_existing() {
-    # Kill by PID file
     if [ -f "${HTTPD_PID}" ]; then
         local pid=$(cat "${HTTPD_PID}" 2>/dev/null)
         if [ -n "${pid}" ] && kill -0 "${pid}" 2>/dev/null; then
@@ -53,77 +51,45 @@ stop_existing() {
         fi
         rm -f "${HTTPD_PID}"
     fi
-    # Kill uhttpd proboy instances
-    for pid in $(ps 2>/dev/null | grep "[u]httpd" | awk '{print $1}'); do
-        local cmdline=$(cat /proc/${pid}/cmdline 2>/dev/null | tr '\0' ' ')
-        case "${cmdline}" in
-            *${UCI_CONF}*|*proboy*) kill "${pid}" 2>/dev/null || true ;;
-        esac
+    # Kill any uhttpd on our port
+    for pid in $(ps 2>/dev/null | awk '/[u]httpd/ {print $1}'); do
+        kill "${pid}" 2>/dev/null || true
     done
-    # Kill simple server
-    for pid in $(ps 2>/dev/null | grep "[p]roboy-httpd" | awk '{print $1}'); do
+    # Kill simple servers
+    for pid in $(ps 2>/dev/null | awk '/[p]roboy.*serve\|[s]imple.*http/ {print $1}'); do
         kill "${pid}" 2>/dev/null || true
     done
     sleep 1
-}
-
-# Add Proboy section to uhttpd UCI config
-configure_uhttpd() {
-    if [ ! -f "${UCI_CONF}" ]; then
-        return 1
-    fi
-
-    # Check if proboy section already exists
-    if uci get uhttpd.${SECTION} >/dev/null 2>&1; then
-        # Update existing section
-        uci set uhttpd.${SECTION}.listen_http="0.0.0.0:${PORT}"
-        uci set uhttpd.${SECTION}.home="${WEB_DIR}"
-        uci set uhttpd.${SECTION}.cgi_prefix="/cgi-bin"
-        uci set uhttpd.${SECTION}.cgi_handler="/bin/sh"
-        uhttpd.index_page="index.html"
-    else
-        # Create new section
-        uci set uhttpd.${SECTION}=uhttpd
-        uci set uhttpd.${SECTION}.listen_http="0.0.0.0:${PORT}"
-        uci set uhttpd.${SECTION}.home="${WEB_DIR}"
-        uci set uhttpd.${SECTION}.cgi_prefix="/cgi-bin"
-        uci set uhttpd.${SECTION}.cgi_handler="/bin/sh"
-        uci set uhttpd.${SECTION}.index_page="index.html"
-    fi
-    uci commit uhttpd 2>/dev/null
-    return 0
 }
 
 start_uhttpd() {
     if ! command -v uhttpd >/dev/null 2>&1; then
         return 1
     fi
+    if [ ! -f "${UCI_CONF}" ]; then
+        return 1
+    fi
 
     log_step "Starting uhttpd on port ${PORT}..."
 
-    # Configure via UCI
-    if configure_uhttpd; then
-        # Restart uhttpd to apply config
-        /etc/init.d/uhttpd restart 2>/dev/null || true
-        sleep 2
-
-        # Check if port is listening
-        if netstat -tlnp 2>/dev/null | grep -q ":${PORT} "; then
-            log_info "uhttpd started via UCI"
-            log_info "URL: http://$(get_ip):${PORT}"
-            return 0
-        fi
+    # Check if proboy section exists, if not add it
+    if ! uci get uhttpd.proboy >/dev/null 2>&1; then
+        uci set uhttpd.proboy=uhttpd
+        uci set uhttpd.proboy.listen_http="0.0.0.0:${PORT}"
+        uci set uhttpd.proboy.home="${WEB_DIR}"
+        uci set uhttpd.proboy.cgi_prefix="/cgi-bin"
+        uci set uhttpd.proboy.cgi_handler="/bin/sh"
+        uci set uhttpd.proboy.index_page="index.html"
+        uci commit uhttpd 2>/dev/null
     fi
 
-    # Fallback: direct CLI
-    log_warn "UCI method failed, trying direct start..."
-    uhttpd -f -p "${PORT}" -h "${WEB_DIR}" -r "${CGI_DIR}" 2>/dev/null &
-    local pid=$!
+    # Restart uhttpd
+    /etc/init.d/uhttpd restart 2>/dev/null || true
     sleep 2
 
-    if [ -n "${pid}" ] && kill -0 "${pid}" 2>/dev/null; then
-        echo "${pid}" > "${HTTPD_PID}"
-        log_info "uhttpd started directly (PID: ${pid})"
+    # Verify port is listening
+    if netstat -tlnp 2>/dev/null | grep -q ":${PORT} "; then
+        log_info "uhttpd started on port ${PORT}"
         log_info "URL: http://$(get_ip):${PORT}"
         return 0
     fi
@@ -131,15 +97,18 @@ start_uhttpd() {
     return 1
 }
 
-start_busybox_httpd() {
+start_httpd_with_cgi() {
     if ! command -v httpd >/dev/null 2>&1; then
         return 1
     fi
 
-    log_step "Starting busybox httpd on port ${PORT}..."
+    log_step "Starting httpd on port ${PORT}..."
 
-    # BusyBox httpd - try with CGI
-    httpd -f -p "${PORT}" -h "${WEB_DIR}" 2>/dev/null &
+    # Create httpd CGI config
+    mkdir -p "${CONFIG_DIR}"
+    echo "/cgi-bin:${CGI_DIR}" > "${CONFIG_DIR}/httpd-cgi.conf"
+
+    httpd -f -p "${PORT}" -h "${WEB_DIR}" -c "${CONFIG_DIR}/httpd-cgi.conf" 2>/dev/null &
     local pid=$!
     sleep 2
 
@@ -153,63 +122,94 @@ start_busybox_httpd() {
     return 1
 }
 
-start_simple_server() {
-    log_warn "Using simple fallback server (no CGI)"
+start_cgi_server() {
+    log_step "Starting CGI server on port ${PORT}..."
 
-    cat > "${PID_DIR}/proboy-httpd.sh" << 'SEOF'
+    # Write CGI-capable server script
+    cat > "${PID_DIR}/proboy-server.sh" << 'SRVEOF'
 #!/bin/sh
 PORT="$1"
 WEB_DIR="$2"
+CGI_DIR="$3"
+
+send_response() {
+    local code="$1"
+    local ctype="$2"
+    local body="$3"
+    printf "HTTP/1.0 %s\r\nContent-Type: %s\r\nConnection: close\r\nAccess-Control-Allow-Origin: *\r\n\r\n%s" "$code" "$ctype" "$body"
+}
+
 while true; do
-    REQ=$(nc -l -p "${PORT}" -q 1 2>/dev/null)
-    # Extract path from request
-    PATH_REQ=$(echo "${REQ}" | head -1 | awk '{print $2}')
+    # Read request line
+    REQUEST=$(nc -l -p "${PORT}" -q 0 -w 5 2>/dev/null)
+    [ -z "${REQUEST}" ] && continue
 
-    if echo "${PATH_REQ}" | grep -q "/api/"; then
-        # CGI API request - execute proboy-api
-        export REQUEST_METHOD="GET"
-        export REQUEST_URI="${PATH_REQ}"
-        export PATH_INFO="${PATH_REQ}"
-        RESP=$("${WEB_DIR}/cgi-bin/proboy-api" 2>/dev/null)
-        {
-            echo "HTTP/1.0 200 OK"
-            echo "Content-Type: application/json"
-            echo "Access-Control-Allow-Origin: *"
-            echo "Connection: close"
-            echo ""
-            echo "${RESP}"
-        } | nc -l -p "${PORT}" -q 1 2>/dev/null
-    else
-        # Static file request
-        FILE="${WEB_DIR}${PATH_REQ}"
-        [ "${PATH_REQ}" = "/" ] && FILE="${WEB_DIR}/index.html"
-        if [ -f "${FILE}" ]; then
-            {
-                echo "HTTP/1.0 200 OK"
-                echo "Content-Type: text/html"
-                echo "Connection: close"
-                echo ""
-                cat "${FILE}"
-            } | nc -l -p "${PORT}" -q 1 2>/dev/null
-        else
-            {
-                echo "HTTP/1.0 404 Not Found"
-                echo "Content-Type: text/html"
-                echo "Connection: close"
-                echo ""
-                echo "<h1>404 Not Found</h1>"
-            } | nc -l -p "${PORT}" -q 1 2>/dev/null
-        fi
-    fi
+    # Parse method and path
+    METHOD=$(echo "${REQUEST}" | head -1 | awk '{print $1}')
+    PATH_REQ=$(echo "${REQUEST}" | head -1 | awk '{print $2}')
+
+    # Handle /api/* requests via CGI
+    case "${PATH_REQ}" in
+        /api/*)
+            ENDPOINT="${PATH_REQ#/api/}"
+            export REQUEST_METHOD="${METHOD}"
+            export REQUEST_URI="${PATH_REQ}"
+            export PATH_INFO="${ENDPOINT}"
+            export CONTENT_LENGTH=0
+
+            RESP=$("${CGI_DIR}/proboy-api" 2>/dev/null)
+            if [ -n "${RESP}" ]; then
+                send_response "200 OK" "application/json" "${RESP}"
+            else
+                send_response "500 Error" "application/json" '{"error":"CGI failed"}'
+            fi
+            ;;
+        /cgi-bin/*)
+            SCRIPT="${PATH_REQ#/cgi-bin/}"
+            export REQUEST_METHOD="${METHOD}"
+            export REQUEST_URI="${PATH_REQ}"
+            export PATH_INFO="${SCRIPT}"
+            export CONTENT_LENGTH=0
+
+            RESP=$("${CGI_DIR}/${SCRIPT}" 2>/dev/null)
+            if [ -n "${RESP}" ]; then
+                send_response "200 OK" "application/json" "${RESP}"
+            else
+                send_response "500 Error" "application/json" '{"error":"CGI failed"}'
+            fi
+            ;;
+        *)
+            # Serve static files
+            FILE="${WEB_DIR}${PATH_REQ}"
+            [ "${PATH_REQ}" = "/" ] && FILE="${WEB_DIR}/index.html"
+
+            if [ -f "${FILE}" ]; then
+                # Detect content type
+                CT="text/html"
+                case "${FILE}" in
+                    *.css) CT="text/css" ;;
+                    *.js) CT="application/javascript" ;;
+                    *.json) CT="application/json" ;;
+                    *.png) CT="image/png" ;;
+                    *.jpg|*.jpeg) CT="image/jpeg" ;;
+                    *.svg) CT="image/svg+xml" ;;
+                esac
+                BODY=$(cat "${FILE}" 2>/dev/null)
+                send_response "200 OK" "${CT}" "${BODY}"
+            else
+                send_response "404 Not Found" "text/html" "<h1>404 Not Found</h1>"
+            fi
+            ;;
+    esac
 done
-SEOF
-    chmod +x "${PID_DIR}/proboy-httpd.sh"
+SRVEOF
+    chmod +x "${PID_DIR}/proboy-server.sh"
 
-    "${PID_DIR}/proboy-httpd.sh" "${PORT}" "${WEB_DIR}" &
+    "${PID_DIR}/proboy-server.sh" "${PORT}" "${WEB_DIR}" "${CGI_DIR}" &
     local pid=$!
     if [ -n "${pid}" ]; then
         echo "${pid}" > "${HTTPD_PID}"
-        log_info "Server started with CGI support (PID: ${pid})"
+        log_info "CGI server started (PID: ${pid})"
         log_info "URL: http://$(get_ip):${PORT}"
         return 0
     fi
@@ -228,15 +228,16 @@ start_webserver() {
     mkdir -p "${PID_DIR}" "${LOG_DIR}" "${WEB_DIR}/cgi-bin"
     chmod +x "${WEB_DIR}/cgi-bin/proboy-api" 2>/dev/null || true
 
+    # Try servers in order
     if start_uhttpd; then
         return 0
     fi
 
-    if start_busybox_httpd; then
+    if start_httpd_with_cgi; then
         return 0
     fi
 
-    if start_simple_server; then
+    if start_cgi_server; then
         return 0
     fi
 
@@ -246,7 +247,7 @@ start_webserver() {
 
 stop_webserver() {
     stop_existing
-    rm -f "${PID_DIR}/proboy-httpd.sh"
+    rm -f "${PID_DIR}/proboy-server.sh"
     log_info "Web server stopped"
 }
 

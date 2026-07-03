@@ -12,16 +12,20 @@ REQUEST_URI="${REQUEST_URI:-/}"
 PATH_INFO="${PATH_INFO:-}"
 
 # Extract the API endpoint
-# REQUEST_URI will be like /cgi-bin/proboy-api/status
-# or PATH_INFO will be /status
+# Handles: /cgi-bin/proboy-api/status, /api/status, or PATH_INFO=/status
 ENDPOINT=""
 if [ -n "${PATH_INFO}" ] && [ "${PATH_INFO}" != "/" ]; then
     ENDPOINT="${PATH_INFO#/}"
+    # Strip /api/ prefix if present
+    case "${ENDPOINT}" in
+        api/*) ENDPOINT="${ENDPOINT#api/}" ;;
+    esac
 else
-    # Extract from REQUEST_URI: /cgi-bin/proboy-api/status → status
+    # Extract from REQUEST_URI
     case "${REQUEST_URI}" in
         /cgi-bin/proboy-api/*) ENDPOINT="${REQUEST_URI#/cgi-bin/proboy-api/}" ;;
         /cgi-bin/proboy-api) ENDPOINT="" ;;
+        /api/*) ENDPOINT="${REQUEST_URI#/api/}" ;;
         *) ENDPOINT="${REQUEST_URI#/}" ;;
     esac
 fi
