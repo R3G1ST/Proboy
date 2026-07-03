@@ -2,10 +2,7 @@
     "admin/services/proboy": {
         "title": "Proboy",
         "order": 90,
-        "action": {
-            "type": "alias",
-            "path": "admin/services/proboy/status"
-        },
+        "action": { "type": "firstchild" },
         "children": {
             "status": {
                 "title": "Dashboard",
