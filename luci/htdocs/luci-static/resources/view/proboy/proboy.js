@@ -1,19 +1,6 @@
 "use strict";
 "require view";
 "require form";
-"require rpc";
-
-var callServiceAction = rpc.declare({
-    object: "service",
-    method: "list",
-    expect: {"": {}}
-});
-
-var callInitAction = rpc.declare({
-    object: "luci.proboy",
-    method: "action",
-    expect: {}
-});
 
 return view.extend({
     render: function() {
@@ -22,10 +9,8 @@ return view.extend({
         m = new form.Map("proboy", _("Proboy"),
             _("Anti-censorship suite for OpenWrt — DPI bypass, gaming, subscriptions"));
 
-        m.tabbed = true;
-
-        // === Dashboard Tab ===
-        s = m.section(form.TypedSection, "proboy", _("Dashboard"));
+        // === General Settings ===
+        s = m.section(form.TypedSection, "proboy", _("General Settings"));
         s.anonymous = true;
         s.addremove = false;
 
@@ -38,8 +23,8 @@ return view.extend({
         o.value("en", "English");
         o.default = "ru";
 
-        // === Zapret Tab ===
-        s = m.section(form.TypedSection, "proboy", _("Zapret Settings"));
+        // === Zapret Settings ===
+        s = m.section(form.TypedSection, "proboy", _("Zapret (DPI Bypass)"));
         s.anonymous = true;
         s.addremove = false;
 
@@ -53,6 +38,7 @@ return view.extend({
         o.value("general-alt", _("General ALT"));
         o.value("fake-tls-auto", _("FAKE TLS AUTO"));
         o.value("fake-tls-auto-alt", _("FAKE TLS AUTO ALT"));
+        o.value("simple-fake", _("SIMPLE FAKE"));
         o.value("discord", _("Discord"));
         o.value("youtube", _("YouTube"));
         o.value("telegram", _("Telegram"));
@@ -62,7 +48,6 @@ return view.extend({
         o.value("psn", _("PlayStation Network"));
         o.value("steam", _("Steam"));
         o.value("epic", _("Epic Games"));
-        o.value("simple-fake", _("SIMPLE FAKE"));
         o.value("alt1", "ALT 1");
         o.value("alt2", "ALT 2");
         o.value("alt3", "ALT 3");
@@ -82,7 +67,7 @@ return view.extend({
         o.default = "1";
         o.rmempty = false;
 
-        // === Games Tab ===
+        // === Game Filter ===
         s = m.section(form.TypedSection, "proboy", _("Game Filter"));
         s.anonymous = true;
         s.addremove = false;
@@ -93,15 +78,15 @@ return view.extend({
 
         o = s.option(form.ListValue, "gamefilter_mode", _("Mode"));
         o.value("universal", _("Universal — all games"));
-        o.value("custom", _("Custom — select games"));
+        o.value("custom", _("Custom"));
         o.default = "universal";
 
         o = s.option(form.Flag, "ps5_enabled", _("PS5 Auto-detect"));
         o.default = "0";
         o.rmempty = false;
 
-        // === Network Tab ===
-        s = m.section(form.TypedSection, "proboy", _("Network Settings"));
+        // === Network ===
+        s = m.section(form.TypedSection, "proboy", _("Network"));
         s.anonymous = true;
         s.addremove = false;
 
@@ -110,9 +95,9 @@ return view.extend({
         o.rmempty = false;
 
         o = s.option(form.ListValue, "dns_provider", _("DNS Provider"));
-        o.value("cloudflare", _("Cloudflare (1.1.1.1)"));
-        o.value("google", _("Google (8.8.8.8)"));
-        o.value("adguard", _("AdGuard"));
+        o.value("cloudflare", "Cloudflare (1.1.1.1)");
+        o.value("google", "Google (8.8.8.8)");
+        o.value("adguard", "AdGuard");
         o.default = "cloudflare";
 
         o = s.option(form.Flag, "youtube_enabled", _("YouTube Optimizer"));
@@ -123,7 +108,7 @@ return view.extend({
         o.default = "0";
         o.rmempty = false;
 
-        // === Subscriptions Tab ===
+        // === Subscriptions ===
         s = m.section(form.TypedSection, "proboy", _("Subscriptions"));
         s.anonymous = true;
         s.addremove = false;
@@ -131,9 +116,9 @@ return view.extend({
         o = s.option(form.Value, "subscription_url", _("Subscription URL"));
         o.placeholder = "https://...";
         o.rmempty = true;
-        o.description = _("Supported: hysteria2://, vless://, trojan://, ss://, clash, v2rayN");
+        o.description = "hysteria2://, vless://, trojan://, ss://, clash, v2rayN";
 
-        // === Web Panel Tab ===
+        // === Web Panel ===
         s = m.section(form.TypedSection, "proboy", _("Web Panel"));
         s.anonymous = true;
         s.addremove = false;
@@ -142,7 +127,7 @@ return view.extend({
         o.default = "1";
         o.rmempty = false;
 
-        o = s.option(form.Value, "web_port", _("Web Panel Port"));
+        o = s.option(form.Value, "web_port", _("Port"));
         o.datatype = "port";
         o.default = "8080";
 
