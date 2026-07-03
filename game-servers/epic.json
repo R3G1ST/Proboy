@@ -1,0 +1,9 @@
+{
+  "name": "Epic Games / Fortnite",
+  "ports": {
+    "tcp": [443, 80],
+    "udp": [9000, 9001, 9002, 9003, 27015, 27016, 27017]
+  },
+  "domains": ["epicgames.com", "fortnite.com", "unrealengine.com", "egsdev.epicgames.com"],
+  "description": "Fortnite and Epic Games services"
+}

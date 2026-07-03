@@ -1,0 +1,9 @@
+{
+  "name": "PlayStation Network",
+  "ports": {
+    "tcp": [80, 443, 1935, 3478, 3479, 3480, 10070, 10071, 10072, 10080],
+    "udp": [3478, 3479, 3480, 3658, 1935, 52000, 52001, 52002, 52003, 52004, 52005]
+  },
+  "domains": ["playstation.com", "sony.com", "playstationnetwork.com", "cdn.playstation.com"],
+  "description": "PS5/PS4 online gaming, PSN Store, voice chat"
+}

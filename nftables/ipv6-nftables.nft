@@ -1,0 +1,27 @@
+#!/usr/sbin/nft -f
+# ═══════════════════════════════════════════════════════
+# Proboy IPv6 Bypass — nftables rules
+# Full IPv6 DPI bypass
+# ═══════════════════════════════════════════════════════
+
+table inet proboy_ipv6 {
+    chain prerouting {
+        type filter hook prerouting priority mangle; policy accept;
+
+        # IPv6 HTTPS bypass
+        # meta l4proto tcp tcp dport 443 meta mark set 0x400
+
+        # IPv6 HTTP bypass
+        # meta l4proto tcp tcp dport 80 meta mark set 0x400
+
+        # IPv6 QUIC bypass
+        # meta l4proto udp udp dport 443 meta mark set 0x400
+    }
+
+    chain mangle {
+        type filter hook postrouting priority mangle; policy accept;
+
+        # IPv6 traffic through zapret
+        meta mark 0x400 queue flags bypass to group 0
+    }
+}

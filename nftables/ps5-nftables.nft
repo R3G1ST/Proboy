@@ -1,0 +1,40 @@
+#!/usr/sbin/nft -f
+# ═══════════════════════════════════════════════════════
+# Proboy PS5 Adapter — nftables rules
+# Auto-detect PS5 by MAC, route through zapret
+# ═══════════════════════════════════════════════════════
+
+# PS5 MAC prefix: AC:DE:48
+# Add your PS5 MAC address here:
+# define PS5_MAC = AC:DE:48:XX:XX:XX
+
+table inet proboy_ps5 {
+    chain prerouting {
+        type filter hook prerouting priority mangle; policy accept;
+
+        # PSN Store (HTTPS)
+        # ether saddr $PS5_MAC meta l4proto tcp tcp dport { 80, 443 } meta mark set 0x200
+
+        # PSN Sign-In
+        # ether saddr $PS5_MAC meta l4proto udp udp dport { 3478-3480 } meta mark set 0x200
+
+        # PS5 Voice Chat
+        # ether saddr $PS5_MAC meta l4proto udp udp dport { 3478-3480, 3658, 52000-59999 } meta mark set 0x200
+
+        # PS5 Game Traffic
+        # ether saddr $PS5_MAC meta l4proto udp udp dport 27015-27300 meta mark set 0x200
+
+        # PS5 Media Stream
+        # ether saddr $PS5_MAC meta l4proto tcp tcp dport 1935 meta mark set 0x200
+
+        # Allow UPnP from PS5
+        # ether saddr $PS5_MAC meta l4proto udp udp dport 1900 accept
+    }
+
+    chain mangle {
+        type filter hook postrouting priority mangle; policy accept;
+
+        # PS5 marked traffic through zapret
+        meta mark 0x200 queue flags bypass to group 0
+    }
+}

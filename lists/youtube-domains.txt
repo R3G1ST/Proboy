@@ -1,0 +1,23 @@
+# Proboy YouTube Domains
+# Used for YouTube optimizer DPI bypass
+
+youtube.com
+www.youtube.com
+m.youtube.com
+music.youtube.com
+tv.youtube.com
+studio.youtube.com
+creatorstudio.youtube.com
+youtube-nocookie.com
+youtu.be
+googlevideo.com
+ytimg.com
+ggpht.com
+gstatic.com
+youtube-ui.l.google.com
+youtubeembedded-pa.googleapis.com
+youtube.googleapis.com
+jnn-pa.googleapis.com
+widevine.l.google.com
+redirector.googlevideo.com
+rr1---sn-a5msenl6.googlevideo.com

@@ -1,0 +1,24 @@
+# Proboy General Blocked Domains
+# Domains commonly blocked by DPI systems
+
+# Russian government blocklist (commonly blocked)
+rutracker.org
+nnmclub.to
+kinozal.tv
+rutor.info
+nntclub.org
+tfile.me
+nnm-club.me
+freebitco.in
+my.mail.ru
+
+# Social networks
+linkedin.com
+flickr.com
+
+# News
+bbc.com
+bbc.co.uk
+dw.com
+euronews.com
+rfreedom.org

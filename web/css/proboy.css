@@ -1,0 +1,283 @@
+/* ═══════════════════════════════════════════════════════
+   Proboy x FreeLink — Web Panel Styles
+   ═══════════════════════════════════════════════════════ */
+
+:root {
+    --bg-dark: #0f0f1a;
+    --bg-card: #1a1a2e;
+    --bg-sidebar: #16213e;
+    --text: #e0e0e0;
+    --text-muted: #888;
+    --green: #00e676;
+    --blue: #448aff;
+    --red: #ff5252;
+    --yellow: #ffd740;
+    --purple: #e040fb;
+    --orange: #ff9100;
+    --cyan: #00e5ff;
+    --border: #2a2a4a;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg-dark);
+    color: var(--text);
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 260px;
+    background: var(--bg-sidebar);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--border);
+    position: fixed;
+    height: 100vh;
+    overflow-y: auto;
+}
+
+.sidebar-brand {
+    text-align: center;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 20px;
+}
+
+.sidebar-brand h1 {
+    font-size: 1.5em;
+    color: var(--cyan);
+}
+
+.sidebar-brand p {
+    color: var(--text-muted);
+    font-size: 0.9em;
+}
+
+.nav-links {
+    list-style: none;
+    flex: 1;
+}
+
+.nav-links li a {
+    display: block;
+    padding: 12px 15px;
+    color: var(--text);
+    text-decoration: none;
+    border-radius: 8px;
+    margin-bottom: 4px;
+    transition: all 0.2s;
+}
+
+.nav-links li a:hover {
+    background: var(--bg-card);
+}
+
+.nav-links li a.active {
+    background: var(--cyan);
+    color: var(--bg-dark);
+    font-weight: bold;
+}
+
+.sidebar-footer {
+    text-align: center;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.8em;
+}
+
+/* Content */
+.content {
+    flex: 1;
+    margin-left: 260px;
+    padding: 30px;
+    max-width: 1200px;
+}
+
+.page { display: none; }
+.page.active { display: block; }
+
+h2 {
+    font-size: 1.8em;
+    margin-bottom: 20px;
+    color: var(--cyan);
+}
+
+h3 {
+    font-size: 1.2em;
+    margin-bottom: 10px;
+    color: var(--yellow);
+}
+
+/* Status Grid */
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.status-card {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid var(--border);
+    transition: transform 0.2s;
+}
+
+.status-card:hover { transform: translateY(-2px); }
+
+.status-card h3 { margin-bottom: 8px; }
+
+.status-card p {
+    font-size: 0.9em;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+}
+
+.status-card.green { border-left: 4px solid var(--green); }
+.status-card.blue { border-left: 4px solid var(--blue); }
+.status-card.purple { border-left: 4px solid var(--purple); }
+.status-card.orange { border-left: 4px solid var(--orange); }
+
+.badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    background: var(--bg-dark);
+    color: var(--cyan);
+}
+
+/* Controls */
+.controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95em;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 500;
+}
+
+.btn:hover { opacity: 0.85; transform: translateY(-1px); }
+.btn-green { background: var(--green); color: var(--bg-dark); }
+.btn-red { background: var(--red); color: white; }
+.btn-blue { background: var(--blue); color: white; }
+.btn-yellow { background: var(--yellow); color: var(--bg-dark); }
+
+/* Settings Panel */
+.settings-panel {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid var(--border);
+}
+
+.settings-panel label {
+    display: block;
+    margin: 10px 0;
+    cursor: pointer;
+}
+
+.settings-panel select,
+.settings-panel input[type="text"],
+.settings-panel input[type="url"],
+.settings-panel textarea {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    background: var(--bg-dark);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 0.95em;
+}
+
+.settings-panel textarea {
+    resize: vertical;
+    font-family: monospace;
+}
+
+/* Combo Grid */
+.combo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.combo-card {
+    background: var(--bg-card);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.combo-card:hover { border-color: var(--cyan); }
+.combo-card.selected { border-color: var(--green); background: rgba(0, 230, 118, 0.1); }
+
+.combo-card h3 { font-size: 1.1em; margin-bottom: 5px; }
+.combo-card p { color: var(--text-muted); font-size: 0.9em; }
+
+/* Game List */
+.game-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 8px;
+}
+
+.game-item {
+    padding: 8px 12px;
+    background: var(--bg-dark);
+    border-radius: 6px;
+    font-size: 0.9em;
+}
+
+/* Authors Table */
+.authors-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+}
+
+.authors-table td {
+    padding: 10px;
+    border-bottom: 1px solid var(--border);
+}
+
+.authors-table a {
+    color: var(--cyan);
+    text-decoration: none;
+}
+
+.authors-table a:hover { text-decoration: underline; }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 60px;
+        padding: 10px;
+    }
+    .sidebar-brand h1 { font-size: 1em; }
+    .sidebar-brand p { display: none; }
+    .nav-links li a { padding: 12px 8px; font-size: 1.2em; }
+    .sidebar-footer { display: none; }
+    .content { margin-left: 60px; padding: 15px; }
+    .status-grid { grid-template-columns: 1fr 1fr; }
+}

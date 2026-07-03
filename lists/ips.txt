@@ -1,0 +1,3 @@
+# Proboy IP Ranges
+# Commonly blocked IP ranges (update as needed)
+# Format: CIDR notation, one per line

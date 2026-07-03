@@ -1,0 +1,100 @@
+# Proboy Game Domains List
+# Used by zapret hostlist-domains for game traffic DPI bypass
+# Format: one domain per line
+
+# Steam
+steampowered.com
+steamcommunity.com
+steamgames.com
+steamusercontent.com
+steamcontent.com
+valve.net
+valvesoftware.com
+steamcdn-a.akamaihd.net
+store.steampowered.com
+
+# Epic Games / Fortnite
+epicgames.com
+fortnite.com
+fortniteporting.com
+unrealengine.com
+unrealengine.dev
+ol.epicgames.com
+launcher-public-service-prod06.ol.epicgames.com
+friends-public-service-prod.ol.epicgames.com
+
+# Riot Games (League of Legends, Valorant, etc.)
+riotgames.com
+leagueoflegends.com
+playvalorant.com
+riotcdn.net
+riotgames.net
+
+# Blizzard / Battle.net
+battle.net
+blizzard.com
+battlenet.com.cn
+worldofwarcraft.com
+diablo3.com
+overwatch.com
+
+# EA / Origin
+ea.com
+origin.com
+eaassets-a.akamaihd.net
+signin.ea.com
+
+# Ubisoft
+ubisoft.com
+ubisoftconnect.com
+uplaypc.com
+
+# Rockstar Games
+rockstargames.com
+socialclub.rockstargames.com
+gta5rp.com
+
+# Minecraft
+minecraft.net
+mojang.com
+minecraftforge.net
+
+# Nintendo
+nintendo.com
+nintendo.net
+accounts.nintendo.com
+
+# Xbox Live
+xbox.com
+xboxlive.com
+xbox.com.cn
+accounts.xbox.com
+
+# PlayStation Network
+playstation.com
+playstation.net
+playstationnetwork.com
+sony.com
+sonyentertainmentnetwork.com
+psn.playstation.com
+store.playstation.com
+
+# Discord (gaming)
+discord.com
+discord.gg
+discordapp.com
+discord.media
+discordcdn.com
+cdn.discordapp.com
+
+# Twitch (streaming while gaming)
+twitch.tv
+jtvnw.net
+ttvnw.net
+usher.ttvnw.net
+
+# Other gaming platforms
+gog.com
+itch.io
+humblebundle.com
+greenmangaming.com

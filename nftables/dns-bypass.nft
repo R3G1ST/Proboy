@@ -1,0 +1,15 @@
+#!/usr/sbin/nft -f
+# ═══════════════════════════════════════════════════════
+# Proboy DNS Bypass — nftables rules
+# Prevents DNS poisoning by redirecting to DoH/DoT
+# ═══════════════════════════════════════════════════════
+
+table inet proboy_dns {
+    chain prerouting {
+        type filter hook prerouting priority dstnat; policy accept;
+
+        # Redirect DNS to local resolver (for DoH/DoT)
+        # meta l4proto udp udp dport 53 redirect to :5353
+        # meta l4proto tcp tcp dport 53 redirect to :5353
+    }
+}

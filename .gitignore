@@ -1,0 +1,12 @@
+*.pyc
+__pycache__/
+*.o
+*.so
+bin/nfqws
+bin/tpws
+bin/hysteria2
+bin/sing-box
+logs/
+*.log
+.env
+config.yaml

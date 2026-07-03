@@ -1,0 +1,19 @@
+# Proboy Telegram Domains
+# Used for Telegram DPI bypass
+
+telegram.org
+desktop.telegram.org
+web.telegram.org
+web.telegram.me
+telegram.me
+telegram.dog
+t.me
+telesco.pe
+core.telegram.org
+updates.telegram.org
+tdlib.github.io
+ton.org
+toncoin.org
+tonkeeper.com
+mytonwallet.io
+telegram-cdn.org

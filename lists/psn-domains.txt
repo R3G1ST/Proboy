@@ -1,0 +1,21 @@
+# Proboy PlayStation Network Domains
+# Used for PS5/PS4 DPI bypass
+
+playstation.com
+playstation.net
+playstationnetwork.com
+psn.playstation.com
+store.playstation.com
+my.playstation.com
+id.playstation.com
+event.playstation.com
+t.playstation.com
+cdn.playstation.com
+ae01.ssl.playstation.com
+playstation.com.cn
+sony.com
+sonyentertainmentnetwork.com
+sony.net
+akamaized.net
+akamaihd.net
+sonyglobal.com

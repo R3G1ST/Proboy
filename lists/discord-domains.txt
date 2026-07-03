@@ -1,0 +1,15 @@
+# Proboy Discord Domains
+# Used for Discord DPI bypass
+
+discord.com
+discordapp.com
+discord.gg
+discord.media
+discordcdn.com
+cdn.discordapp.com
+gateway.discord.gg
+remote-auth-gateway.discord.gg
+router.discordapp.net
+sentry.io
+status.discord.com
+dis.gd

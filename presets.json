@@ -1,0 +1,112 @@
+{
+  "presets": [
+    {
+      "id": "gamer",
+      "name": "Геймер",
+      "name_en": "Gamer",
+      "description": "Proxy + Zapret + Games + PS5 + DNS",
+      "description_en": "Proxy + Zapret + Games + PS5 + DNS",
+      "components": {
+        "zapret": true,
+        "gamefilter": true,
+        "ps5": true,
+        "dns": true,
+        "youtube": false,
+        "ipv6": false,
+        "failover": true
+      },
+      "strategy": "gaming",
+      "icon": "🎮"
+    },
+    {
+      "id": "maximum",
+      "name": "Максимум",
+      "name_en": "Maximum",
+      "description": "Все компоненты включены",
+      "description_en": "All components enabled",
+      "components": {
+        "zapret": true,
+        "gamefilter": true,
+        "ps5": true,
+        "dns": true,
+        "youtube": true,
+        "ipv6": true,
+        "failover": true
+      },
+      "strategy": "auto",
+      "icon": "🚀"
+    },
+    {
+      "id": "minimum",
+      "name": "Минимум",
+      "name_en": "Minimum",
+      "description": "Только Proxy + Zapret",
+      "description_en": "Proxy + Zapret only",
+      "components": {
+        "zapret": true,
+        "gamefilter": false,
+        "ps5": false,
+        "dns": false,
+        "youtube": false,
+        "ipv6": false,
+        "failover": false
+      },
+      "strategy": "general",
+      "icon": "⚡"
+    },
+    {
+      "id": "streaming",
+      "name": "Стриминг",
+      "name_en": "Streaming",
+      "description": "Proxy + YouTube + DNS",
+      "description_en": "Proxy + YouTube + DNS",
+      "components": {
+        "zapret": true,
+        "gamefilter": false,
+        "ps5": false,
+        "dns": true,
+        "youtube": true,
+        "ipv6": false,
+        "failover": true
+      },
+      "strategy": "youtube",
+      "icon": "📺"
+    },
+    {
+      "id": "freedom",
+      "name": "Свобода",
+      "name_en": "Freedom",
+      "description": "Всё кроме PS5/Telegram",
+      "description_en": "Everything except PS5/Telegram",
+      "components": {
+        "zapret": true,
+        "gamefilter": true,
+        "ps5": false,
+        "dns": true,
+        "youtube": true,
+        "ipv6": true,
+        "failover": true
+      },
+      "strategy": "auto",
+      "icon": "🌐"
+    },
+    {
+      "id": "custom",
+      "name": "Свой",
+      "name_en": "Custom",
+      "description": "Выбери что нужно",
+      "description_en": "Choose what you need",
+      "components": {
+        "zapret": false,
+        "gamefilter": false,
+        "ps5": false,
+        "dns": false,
+        "youtube": false,
+        "ipv6": false,
+        "failover": false
+      },
+      "strategy": "auto",
+      "icon": "🔧"
+    }
+  ]
+}

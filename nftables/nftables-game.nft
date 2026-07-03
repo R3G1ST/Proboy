@@ -1,0 +1,54 @@
+#!/usr/sbin/nft -f
+# ═══════════════════════════════════════════════════════
+# Proboy Game Filter — nftables rules
+# Routes game traffic through zapret NFQUEUE
+# ═══════════════════════════════════════════════════════
+
+flush ruleset
+
+table inet proboy_game {
+    chain prerouting {
+        type filter hook prerouting priority mangle; policy accept;
+
+        # Discord Voice
+        meta l4proto udp udp dport 50000-65535 meta mark set 0x100
+        meta l4proto tcp tcp dport 50000-65535 meta mark set 0x100
+
+        # Steam / CS2
+        meta l4proto udp udp dport 27015-27300 meta mark set 0x100
+        meta l4proto tcp tcp dport 27015-27300 meta mark set 0x100
+        meta l4proto udp udp dport 4380 meta mark set 0x100
+
+        # Fortnite / Epic Games
+        meta l4proto udp udp dport 9000-9100 meta mark set 0x100
+
+        # PlayStation Network
+        meta l4proto udp udp dport 3478-3480 meta mark set 0x100
+        meta l4proto udp udp dport 3658 meta mark set 0x100
+        meta l4proto udp udp dport 1935 meta mark set 0x100
+        meta l4proto udp udp dport 52000-59999 meta mark set 0x100
+
+        # Xbox Live
+        meta l4proto udp udp dport 3074 meta mark set 0x100
+        meta l4proto tcp tcp dport 3074 meta mark set 0x100
+        meta l4proto udp udp dport 88 meta mark set 0x100
+
+        # League of Legends / Riot
+        meta l4proto udp udp dport 5000-5500 meta mark set 0x100
+        meta l4proto tcp tcp dport 5000-5500 meta mark set 0x100
+
+        # Overwatch / Battle.net
+        meta l4proto udp udp dport 1119 meta mark set 0x100
+        meta l4proto udp udp dport 3724 meta mark set 0x100
+
+        # Universal: all high UDP ports
+        meta l4proto udp udp dport > 1024 meta mark set 0x100
+    }
+
+    chain mangle {
+        type filter hook postrouting priority mangle; policy accept;
+
+        # Send marked packets to zapret NFQUEUE
+        meta mark 0x100 queue flags bypass to group 0
+    }
+}

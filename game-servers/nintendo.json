@@ -1,0 +1,9 @@
+{
+  "name": "Nintendo Switch Online",
+  "ports": {
+    "tcp": [80, 443],
+    "udp": [1, 49152, 49153, 49154, 49155, 49156, 49157, 49158, 49159, 49160, 49161, 49162, 49163]
+  },
+  "domains": ["nintendo.com", "nintendo.net"],
+  "description": "Nintendo Switch Online gaming"
+}

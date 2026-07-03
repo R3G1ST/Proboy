@@ -1,0 +1,9 @@
+{
+  "name": "EA / Origin",
+  "ports": {
+    "tcp": [443, 80, 17900, 17901, 17902, 18000],
+    "udp": [3659, 14000, 14001, 14002, 14003, 14004, 14005, 14006, 14007, 14008, 14009, 14010]
+  },
+  "domains": ["ea.com", "origin.com"],
+  "description": "FIFA/EA FC, Apex Legends, Battlefield, and other EA games"
+}

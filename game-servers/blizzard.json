@@ -1,0 +1,9 @@
+{
+  "name": "Blizzard / Battle.net",
+  "ports": {
+    "tcp": [1119, 3724, 3725, 6112, 6113, 6114],
+    "udp": [1119, 3724, 3725, 50000, 6112]
+  },
+  "domains": ["battle.net", "blizzard.com", "worldofwarcraft.com"],
+  "description": "Overwatch, WoW, Diablo, and other Blizzard games"
+}
