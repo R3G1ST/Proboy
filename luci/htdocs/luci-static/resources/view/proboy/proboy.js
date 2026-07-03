@@ -4,10 +4,10 @@
 "require fs";
 "require uci";
 
-function isRunning(name) {
+async function checkRunning(name) {
     try {
-        var pid = fs.read("/var/run/proboy/" + name + ".pid");
-        if (pid && pid.trim()) { fs.exec("/bin/kill", ["-0", pid.trim()]); return true; }
+        var pid = await fs.trimmed("/var/run/proboy/" + name + ".pid");
+        if (pid) { await fs.exec("/bin/kill", ["-0", pid]); return true; }
     } catch(e) {}
     return false;
 }
@@ -36,6 +36,8 @@ return view.extend({
         var m = new form.Map("proboy", "\u041F\u0440\u043E\u0431\u043E\u0439", "Anti-censorship suite");
         m.tabbed = true;
         var info = await sysInfo();
+        var zapretRunning = await checkRunning("zapret");
+        var singboxRunning = await checkRunning("singbox");
 
         var s = m.section(form.TypedSection, "proboy", "\u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438 Proboy");
         s.anonymous = true;
@@ -47,8 +49,8 @@ return view.extend({
         var o = s.taboption("dashboard", form.Value, "_status", "\u0421\u0442\u0430\u0442\u0443\u0441");
         o.readonly = true;
         o.cfgvalue = function() {
-            var z = isRunning("zapret") ? "Running" : "Stopped";
-            var sb = isRunning("singbox") ? "Running" : "Stopped";
+            var z = zapretRunning ? "Running" : "Stopped";
+            var sb = singboxRunning ? "Running" : "Stopped";
             var gf = uci.get("proboy","main","gamefilter_enabled")==="1";
             var dn = uci.get("proboy","main","dns_enabled")==="1";
             var st = uci.get("proboy","main","zapret_strategy")||"auto";
