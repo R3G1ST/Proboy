@@ -184,24 +184,57 @@ return view.extend({
         o.datatype = "port"; o.default = "8080";
 
         return m.render().then(function(mapEl) {
-            var tabs = mapEl.querySelectorAll('.cbi-value-tab-content');
+            var containers = mapEl.querySelectorAll('[data-tab-title]');
             var zapretTab = null;
-            for (var i = 0; i < tabs.length; i++) {
-                var lbl = tabs[i].getAttribute('data-tab-title') || '';
-                if (lbl === 'Zapret') { zapretTab = tabs[i]; break; }
-            }
-            if (!zapretTab) {
-                var containers = mapEl.querySelectorAll('[data-tab]');
-                for (var j = 0; j < containers.length; j++) {
-                    if (containers[j].getAttribute('data-tab') === 'zapret') {
-                        zapretTab = containers[j]; break;
-                    }
+            for (var i = 0; i < containers.length; i++) {
+                var title = containers[i].getAttribute('data-tab-title') || '';
+                if (title === 'Zapret' || title === 'zapret') {
+                    zapretTab = containers[i];
+                    break;
                 }
             }
             if (zapretTab) {
                 var d = document.createElement('div');
-                d.className = 'cbi-value';
-                d.innerHTML = '<div class="cbi-value-title">\u0423\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u0435</div><div class="cbi-value-field"><input type="button" class="cbi-button cbi-button-apply" value="\u0417\u0430\u043F\u0443\u0441\u0442\u0438\u0442\u044C" onclick="doProboyAction(\'start\')" /> <input type="button" class="cbi-button cbi-button-reset" value="\u041E\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u0442\u044C" onclick="doProboyAction(\'stop\')" /> <input type="button" class="cbi-button cbi-button-apply" value="\u041F\u0435\u0440\u0435\u0437\u0430\u043F\u0443\u0441\u0442\u0438\u0442\u044C" onclick="doProboyAction(\'restart\')" /><div id="proboy-result" style="display:none;padding:8px;border-radius:4px;background:#e8f5e9;margin-top:8px"></div></div>';
+                d.setAttribute('class', 'cbi-value');
+                d.setAttribute('style', 'margin-top:16px');
+
+                var titleDiv = document.createElement('div');
+                titleDiv.setAttribute('class', 'cbi-value-title');
+                titleDiv.textContent = '\u0423\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u0435';
+                d.appendChild(titleDiv);
+
+                var fieldDiv = document.createElement('div');
+                fieldDiv.setAttribute('class', 'cbi-value-field');
+
+                var btnStart = document.createElement('input');
+                btnStart.setAttribute('type', 'button');
+                btnStart.setAttribute('class', 'cbi-button cbi-button-apply');
+                btnStart.setAttribute('value', '\u0417\u0430\u043F\u0443\u0441\u0442\u0438\u0442\u044C');
+                btnStart.addEventListener('click', function() { doProboyAction('start'); });
+                fieldDiv.appendChild(btnStart);
+                fieldDiv.appendChild(document.createTextNode(' '));
+
+                var btnStop = document.createElement('input');
+                btnStop.setAttribute('type', 'button');
+                btnStop.setAttribute('class', 'cbi-button cbi-button-reset');
+                btnStop.setAttribute('value', '\u041E\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u0442\u044C');
+                btnStop.addEventListener('click', function() { doProboyAction('stop'); });
+                fieldDiv.appendChild(btnStop);
+                fieldDiv.appendChild(document.createTextNode(' '));
+
+                var btnRestart = document.createElement('input');
+                btnRestart.setAttribute('type', 'button');
+                btnRestart.setAttribute('class', 'cbi-button cbi-button-apply');
+                btnRestart.setAttribute('value', '\u041F\u0435\u0440\u0435\u0437\u0430\u043F\u0443\u0441\u0442\u0438\u0442\u044C');
+                btnRestart.addEventListener('click', function() { doProboyAction('restart'); });
+                fieldDiv.appendChild(btnRestart);
+
+                var resultDiv = document.createElement('div');
+                resultDiv.setAttribute('id', 'proboy-result');
+                resultDiv.setAttribute('style', 'display:none;padding:8px;border-radius:4px;background:#e8f5e9;margin-top:8px');
+                fieldDiv.appendChild(resultDiv);
+
+                d.appendChild(fieldDiv);
                 zapretTab.appendChild(d);
             }
             return mapEl;
