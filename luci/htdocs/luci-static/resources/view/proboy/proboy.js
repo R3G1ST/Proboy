@@ -4,28 +4,15 @@
 "require fs";
 "require uci";
 
-/* ═══ HELPERS ═══ */
-function getLang() {
-    try { return uci.get("proboy", "main", "language") || "ru"; } catch(e) { return "ru"; }
-}
-
 function isRunning(name) {
     try {
         var pid = fs.read("/var/run/proboy/" + name + ".pid");
-        if (pid && pid.trim()) {
-            fs.exec("/bin/kill", ["-0", pid.trim()]);
-            return true;
-        }
+        if (pid && pid.trim()) { fs.exec("/bin/kill", ["-0", pid.trim()]); return true; }
     } catch(e) {}
     return false;
 }
 
-function b(ok) {
-    return ok ? '<span style="color:#10b981;font-weight:bold">● Running</span>'
-              : '<span style="color:#ef4444;font-weight:bold">● Stopped</span>';
-}
-
-function I() {
+function getInfo() {
     var R = {};
     try { var m = fs.read("/proc/meminfo"); if (m) { var x = m.match(/MemTotal:\s+(\d+)/); if (x) R.ram = Math.round(parseInt(x[1])/1024)+" MB"; } } catch(e) {}
     try { var d = fs.exec("/bin/df",["-m","/"]); if (d.stdout) { var p = d.stdout.split("\n")[1].split(/\s+/); R.flash = p[3]+" MB free"; } } catch(e) {}
@@ -42,101 +29,43 @@ function I() {
     return R;
 }
 
-/* ═══ GLOBAL ACTIONS ═══ */
-window.doAction = function(action) {
-    var el = document.getElementById("proboy-r");
-    if (el) { el.style.display = "block"; el.textContent = action + "..."; }
-    fs.exec("/etc/init.d/proboy", [action]).then(function() {
-        setTimeout(function() { window.location.reload(); }, 2000);
-    }).catch(function(e) {
-        if (el) el.textContent = "Error: " + e.message;
-    });
-};
-
-window.doPreset = function(key) {
-    var P = {
-        gamer:{zapret_strategy:"gaming",gamefilter_enabled:"1"},
-        max:{zapret_strategy:"aggressive",gamefilter_enabled:"1",youtube_enabled:"1",ipv6_enabled:"1",failover_enabled:"1"},
-        min:{zapret_strategy:"general",gamefilter_enabled:"0",youtube_enabled:"0",ipv6_enabled:"0",failover_enabled:"0"},
-        stream:{zapret_strategy:"youtube",gamefilter_enabled:"0",youtube_enabled:"1",failover_enabled:"1"},
-        free:{zapret_strategy:"aggressive",gamefilter_enabled:"1",youtube_enabled:"1",ipv6_enabled:"1",failover_enabled:"1"}
-    };
-    var N = {gamer:"\u0413\u0435\u0439\u043C\u0435\u0440",max:"\u041C\u0430\u043A\u0441\u0438\u043C\u0443\u043C",min:"\u041C\u0438\u043D\u0438\u043C\u0443\u0441",stream:"\u0421\u0442\u0440\u0438\u043C\u0438\u043D\u0433",free:"\u0421\u0432\u043E\u0431\u043E\u0434\u0430"};
-    if (!confirm("\u041F\u0440\u0438\u043C\u0435\u043D\u0438\u0442\u044C: " + (N[key]||key) + "?")) return;
-    uci.load("proboy");
-    var s = P[key]; for (var k in s) uci.set("proboy","main",k,s[k]);
-    uci.commit("proboy");
-    fs.exec("/etc/init.d/proboy",["restart"]);
-    alert((N[key]||key) + " applied!");
-    window.location.reload();
-};
-
-/* ═══ MAIN ═══ */
 return view.extend({
     render: function() {
-        var m = new form.Map("proboy", "\u041F\u0440\u043E\u0431\u043E\u0439", "Anti-censorship suite \u2014 DPI bypass, gaming, subscriptions");
+        var m = new form.Map("proboy", "\u041F\u0440\u043E\u0431\u043E\u0439", "Anti-censorship suite");
         m.tabbed = true;
-        var info = I();
-        var lang = getLang();
-        var zapret = isRunning("zapret"), singbox = isRunning("singbox");
-        var gf = uci.get("proboy","main","gamefilter_enabled")==="1";
-        var dn = uci.get("proboy","main","dns_enabled")==="1";
-        var strat = uci.get("proboy","main","zapret_strategy")||"auto";
+        var I = getInfo();
 
         /* ─── Dashboard ─── */
         var s = m.section(form.TypedSection, "proboy", "\u041F\u0430\u043D\u0435\u043B\u044C \u0443\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u044F");
         s.anonymous = true; s.addremove = false;
         s.cfgsections = function() { return ["main"]; };
 
-        // Status as form value (works with rawhtml)
-        var o = s.option(form.Value, "_s", "\u0421\u0442\u0430\u0442\u0443\u0441 \u0441\u0435\u0440\u0432\u0438\u0441\u043E\u0432");
-        o.readonly = true;
-        o.cfgvalue = function() {
-            return 'Zapret: ' + b(zapret) + ' <code>' + strat + '</code> | sing-box: ' + b(singbox) + ' | Game Filter: ' + b(gf) + ' | DNS: ' + b(dn);
-        };
+        var o = s.option(form.Value, "_os", "\u041E\u0421");
+        o.readonly = true; o.cfgvalue = function() { return I.os || "?"; };
 
-        // System info
-        o = s.option(form.Value, "_sys", "\u0421\u0438\u0441\u0442\u0435\u043C\u0430");
-        o.readonly = true;
-        o.cfgvalue = function() {
-            return (info.os||"?") + ' | ' + (info.model||"?") + ' | ' + (info.cpu||"?") + ' (' + info.cores + ') | RAM: ' + (info.ram||"?") + ' | Flash: ' + (info.flash||"?") + ' | v' + (info.ver||"?") + ' | ' + (info.uptime||"?");
-        };
+        o = s.option(form.Value, "_model", "\u0420\u043E\u0443\u0442\u0435\u0440");
+        o.readonly = true; o.cfgvalue = function() { return I.model || "?"; };
 
-        // Control buttons
-        o = s.option(form.Value, "_ctrl", "\u0423\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u0435");
-        o.readonly = true;
-        o.cfgvalue = function() {
-            return '<input type="button" class="cbi-button cbi-button-apply" value="\u0417\u0430\u043F\u0443\u0441\u0442\u0438\u0442\u044C" onclick="doAction(\'start\')" /> <input type="button" class="cbi-button cbi-button-reset" value="\u041E\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u0442\u044C" onclick="doAction(\'stop\')" /> <input type="button" class="cbi-button cbi-button-apply" value="\u041F\u0435\u0440\u0435\u0437\u0430\u043F\u0443\u0441\u0442\u0438\u0442\u044C" onclick="doAction(\'restart\')" /><div id="proboy-r" style="margin-top:8px;display:none;padding:8px;border-radius:4px;background:#e8f5e9"></div>';
-        };
+        o = s.option(form.Value, "_cpu", "CPU");
+        o.readonly = true; o.cfgvalue = function() { return (I.cpu||"?") + " (" + I.cores + " cores)"; };
 
-        /* ─── Combo Builder ─── */
-        s = m.section(form.TypedSection, "proboy", "\u041A\u043E\u043C\u0431\u043E \u0411\u0438\u043B\u0434\u0435\u0440");
-        s.anonymous = true; s.addremove = false;
-        s.cfgsections = function() { return ["main"]; };
+        o = s.option(form.Value, "_ram", "RAM");
+        o.readonly = true; o.cfgvalue = function() { return I.ram || "?"; };
 
-        var presets = [
-            {k:"gamer",i:"\uD83C\uDFAE",ru:"\u0413\u0435\u0439\u043C\u0435\u0440",en:"Gamer",d:"\u0418\u0433\u0440\u044B"},
-            {k:"max",i:"\uD83D\uDE80",ru:"\u041C\u0430\u043A\u0441\u0438\u043C\u0443\u043C",en:"Maximum",d:"\u041C\u0430\u043A\u0441. \u043E\u0431\u0445\u043E\u0434"},
-            {k:"min",i:"\uD83D\uDD0B",ru:"\u041C\u0438\u043D\u0438\u043C\u0443\u0441",en:"Minimum",d:"\u041C\u0430\u043B\u043E \u0440\u0435\u0441\u0443\u0440\u0441\u043E\u0432"},
-            {k:"stream",i:"\uD83D\uDCFA",ru:"\u0421\u0442\u0440\u0438\u043C\u0438\u043D\u0433",en:"Streaming",d:"YouTube 4K"},
-            {k:"free",i:"\uD83C\uDFF4",ru:"\u0421\u0432\u043E\u0431\u043E\u0434\u0430",en:"Freedom",d:"\u041F\u043E\u043B\u043D\u0430\u044F \u0441\u0432\u043E\u0431\u043E\u0434\u0430"}
-        ];
-        o = s.option(form.Value, "_combo", "\u041F\u0440\u0435\u0441\u0435\u0442\u044B");
-        o.readonly = true;
-        o.cfgvalue = function() {
-            var h = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px">';
-            presets.forEach(function(p) {
-                var nm = lang==="ru"?p.ru:p.en;
-                h += '<div style="border:1px solid #ddd;border-radius:8px;padding:12px;text-align:center;cursor:pointer" onclick="doPreset(\''+p.k+'\')">';
-                h += '<div style="font-size:24px">'+p.i+'</div>';
-                h += '<div style="font-weight:bold;font-size:13px">'+nm+'</div>';
-                h += '<div style="color:#666;font-size:11px">'+p.d+'</div></div>';
-            });
-            return h + '</div>';
-        };
+        o = s.option(form.Value, "_flash", "Flash");
+        o.readonly = true; o.cfgvalue = function() { return I.flash || "?"; };
+
+        o = s.option(form.Value, "_arch", "Arch");
+        o.readonly = true; o.cfgvalue = function() { return I.arch || "?"; };
+
+        o = s.option(form.Value, "_ver", "\u0412\u0435\u0440\u0441\u0438\u044F");
+        o.readonly = true; o.cfgvalue = function() { return I.ver || "?"; };
+
+        o = s.option(form.Value, "_uptime", "Uptime");
+        o.readonly = true; o.cfgvalue = function() { return I.uptime || "?"; };
 
         /* ─── Zapret ─── */
-        s = m.section(form.TypedSection, "proboy", "Zapret (DPI Bypass)");
+        s = m.section(form.TypedSection, "proboy", "Zapret");
         s.anonymous = true; s.addremove = false;
         s.cfgsections = function() { return ["main"]; };
 
@@ -151,7 +80,7 @@ return view.extend({
         o.default = "1"; o.rmempty = false;
 
         /* ─── Games ─── */
-        s = m.section(form.TypedSection, "proboy", "\u0418\u0433\u0440\u043E\u0432\u043E\u0439 \u0444\u0438\u043B\u044C\u0442\u0440");
+        s = m.section(form.TypedSection, "proboy", "\u0418\u0433\u0440\u044B");
         s.anonymous = true; s.addremove = false;
         s.cfgsections = function() { return ["main"]; };
 
@@ -186,11 +115,14 @@ return view.extend({
         o = s.option(form.Flag, "ipv6_enabled", "IPv6 Bypass");
         o.default = "0"; o.rmempty = false;
 
-        o = s.option(form.Value, "_net", "\u0421\u0435\u0442\u0435\u0432\u0430\u044F \u0438\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0438\u044F");
-        o.readonly = true;
-        o.cfgvalue = function() {
-            return 'LAN: ' + (info.ip||"?") + ' | Gateway: ' + (info.gw||"?") + ' | DNS: ' + (info.dns||"?") + ' | Uptime: ' + (info.uptime||"?");
-        };
+        o = s.option(form.Value, "_lan", "LAN IP");
+        o.readonly = true; o.cfgvalue = function() { return I.ip || "?"; };
+
+        o = s.option(form.Value, "_gw", "Gateway");
+        o.readonly = true; o.cfgvalue = function() { return I.gw || "?"; };
+
+        o = s.option(form.Value, "_dns", "DNS");
+        o.readonly = true; o.cfgvalue = function() { return I.dns || "?"; };
 
         /* ─── Subscriptions ─── */
         s = m.section(form.TypedSection, "proboy", "\u041F\u043E\u0434\u043F\u0438\u0441\u043A\u0438");
@@ -200,12 +132,6 @@ return view.extend({
         o = s.option(form.Value, "subscription_url", "URL \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0438");
         o.placeholder = "https://...";
         o.rmempty = true;
-
-        o = s.option(form.Value, "_subf", "\u0424\u043E\u0440\u043C\u0430\u0442\u044B");
-        o.readonly = true;
-        o.cfgvalue = function() {
-            return 'hysteria2://, vless://, trojan://, ss://, clash, v2rayN';
-        };
 
         /* ─── Settings ─── */
         s = m.section(form.TypedSection, "proboy", "\u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438");
