@@ -1,0 +1,14 @@
+{
+    "admin/services/proboy": {
+        "title": "Proboy",
+        "order": 90,
+        "action": {
+            "type": "view",
+            "path": "proboy/proboy"
+        },
+        "depends": {
+            "acl": ["luci-app-proboy"],
+            "uci": {"proboy": true}
+        }
+    }
+}

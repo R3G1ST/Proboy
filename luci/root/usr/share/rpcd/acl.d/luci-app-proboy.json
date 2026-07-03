@@ -1,0 +1,18 @@
+{
+    "luci-app-proboy": {
+        "description": "Grant UCI and RPC access to Proboy",
+        "read": {
+            "file": {
+                "/etc/init.d/proboy": ["exec"],
+                "/opt/proboy/scripts/proboy.sh": ["exec"]
+            },
+            "ubus": {
+                "service": ["list"]
+            },
+            "uci": ["proboy"]
+        },
+        "write": {
+            "uci": ["proboy"]
+        }
+    }
+}

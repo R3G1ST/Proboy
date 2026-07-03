@@ -478,33 +478,36 @@ set_permissions() {
 install_luci() {
     step "Installing LuCI integration..."
 
-    # Remove old Lua controller (won't work on OpenWrt 24.10+)
+    # Remove old broken files
+    rm -f /usr/share/luci/menu.d/proboy.json 2>/dev/null || true
+    rm -f /usr/share/luci/menu.d/luci-app-proboy.json 2>/dev/null || true
+    rm -f /usr/share/rpcd/acl.d/proboy.json 2>/dev/null || true
     rm -rf /usr/lib/lua/luci/controller/proboy.lua 2>/dev/null || true
     rm -rf /usr/lib/lua/luci/view/proboy/ 2>/dev/null || true
 
-    # Remove old broken files
-    rm -f /usr/share/luci/menu.d/proboy.json 2>/dev/null || true
-    rm -f /usr/share/rpcd/acl.d/proboy.json 2>/dev/null || true
-
-    # Install JSON menu entry for ucode LuCI
+    # Install JSON menu entry (like podkop)
     mkdir -p /usr/share/luci/menu.d
-    dl "${REPO}/luci/root/usr/share/luci/menu.d/proboy.json" /usr/share/luci/menu.d/proboy.json 2>/dev/null || true
+    dl "${REPO}/luci/root/usr/share/luci/menu.d/luci-app-proboy.json" /usr/share/luci/menu.d/luci-app-proboy.json 2>/dev/null || true
 
-    # Verify JSON was downloaded
-    if [ -f /usr/share/luci/menu.d/proboy.json ]; then
-        chmod 644 /usr/share/luci/menu.d/proboy.json
-        ok "LuCI menu installed"
-    else
-        warn "Failed to install LuCI menu"
-        return
-    fi
+    # Install ACL permissions
+    mkdir -p /usr/share/rpcd/acl.d
+    dl "${REPO}/luci/root/usr/share/rpcd/acl.d/luci-app-proboy.json" /usr/share/rpcd/acl.d/luci-app-proboy.json 2>/dev/null || true
+
+    # Install JS view files (like podkop)
+    mkdir -p /www/luci-static/resources/view/proboy
+    dl "${REPO}/luci/htdocs/luci-static/resources/view/proboy/proboy.js" /www/luci-static/resources/view/proboy/proboy.js 2>/dev/null || true
+
+    # Fix permissions
+    chmod 644 /usr/share/luci/menu.d/luci-app-proboy.json 2>/dev/null || true
+    chmod 644 /usr/share/rpcd/acl.d/luci-app-proboy.json 2>/dev/null || true
+    chmod 644 /www/luci-static/resources/view/proboy/proboy.js 2>/dev/null || true
 
     # Clear LuCI cache
     rm -f /tmp/luci-indexcache 2>/dev/null || true
     rm -rf /tmp/luci-compilecache 2>/dev/null || true
 
-    # Restart uhttpd to reload LuCI
-    /etc/init.d/uhttpd restart 2>/dev/null || true
+    # Restart rpcd
+    /etc/init.d/rpcd restart 2>/dev/null || true
 
     ok "LuCI integration ready"
 }

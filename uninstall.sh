@@ -74,16 +74,19 @@ fi
 # Remove LuCI integration
 echo "[>>] Removing LuCI integration..."
 rm -f /usr/share/luci/menu.d/proboy.json
+rm -f /usr/share/luci/menu.d/luci-app-proboy.json
 rm -f /usr/share/rpcd/acl.d/proboy.json
+rm -f /usr/share/rpcd/acl.d/luci-app-proboy.json
 rm -rf /usr/lib/lua/luci/controller/proboy.lua
 rm -rf /usr/lib/lua/luci/view/proboy
+rm -rf /www/luci-static/resources/view/proboy
 
 # Clear LuCI cache
 rm -f /tmp/luci-indexcache 2>/dev/null || true
 rm -rf /tmp/luci-compilecache 2>/dev/null || true
 
-# Restart uhttpd
-/etc/init.d/uhttpd restart 2>/dev/null || true
+# Restart rpcd
+/etc/init.d/rpcd restart 2>/dev/null || true
 
 # Remove all Proboy files
 echo "[>>] Removing Proboy files..."
