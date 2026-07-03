@@ -199,8 +199,29 @@ async function loadAuthorsPage() {
 }
 
 async function loadComboPage() {
-    renderComboPage();
-    return '';
+    let html = `
+        <div class="page-header">
+            <h1 data-i18n="combo_title">${t('combo_title')}</h1>
+            <p data-i18n="combo_desc">${t('combo_desc')}</p>
+        </div>
+        <div class="combo-grid">
+    `;
+
+    for (const [key, preset] of Object.entries(COMBO_PRESETS)) {
+        const name = preset.name[currentLang] || preset.name.en;
+        const desc = preset.desc[currentLang] || preset.desc.en;
+        html += `
+            <div class="combo-card" onclick="applyPreset('${key}')">
+                <div class="combo-icon">${getPresetIcon(key)}</div>
+                <h3>${name}</h3>
+                <p>${desc}</p>
+                <button class="btn btn-accent">${t('apply')}</button>
+            </div>
+        `;
+    }
+
+    html += '</div>';
+    return html;
 }
 
 async function loadSettingsPage() {
