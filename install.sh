@@ -300,10 +300,8 @@ install_service() {
 #!/bin/sh /etc/rc.common
 START=99
 STOP=10
-USE_PROCD=1
-PROG=/opt/proboy/scripts/proboy.sh
 
-start_service() {
+start() {
     if [ -f /etc/proboy/proboy.conf ]; then
         . /etc/proboy/proboy.conf
         if [ "${enabled}" != "1" ]; then
@@ -311,14 +309,17 @@ start_service() {
             return
         fi
     fi
-    procd_open_instance
-    procd_set_param command "$PROG" start
-    procd_set_param respawn
-    procd_close_instance
+    /opt/proboy/scripts/proboy.sh start
 }
 
-stop_service() {
-    "$PROG" stop
+stop() {
+    /opt/proboy/scripts/proboy.sh stop
+}
+
+restart() {
+    stop
+    sleep 1
+    start
 }
 SVCEOF
         chmod +x /etc/init.d/proboy

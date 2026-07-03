@@ -1,6 +1,8 @@
 #!/bin/sh
-# Proboy Web Server — busybox httpd + CGI API
+# ═══════════════════════════════════════════════════════
+# Proboy Web Server — uhttpd or busybox httpd + CGI API
 # Serves web panel and handles API requests
+# ═══════════════════════════════════════════════════════
 
 WEB_DIR="/opt/proboy/web"
 PID_DIR="/var/run/proboy"
@@ -9,6 +11,7 @@ CONFIG_DIR="/etc/proboy"
 INSTALL_DIR="/opt/proboy"
 PORT="${web_port:-8080}"
 HTTPD_PID="${PID_DIR}/webserver.pid"
+HTTPD_CONF="${CONFIG_DIR}/httpd.conf"
 
 # Colors
 RED='\033[0;31m'
@@ -29,46 +32,150 @@ load_config() {
     fi
 }
 
-start_webserver() {
+get_ip() {
+    local ip=""
+    if command -v ip >/dev/null 2>&1; then
+        ip=$(ip -4 addr show br-lan 2>/dev/null | grep 'inet ' | awk '{print $2}' | cut -d/ -f1 | head -1)
+    fi
+    if [ -z "${ip}" ]; then
+        ip=$(hostname -I 2>/dev/null | awk '{print $1}')
+    fi
+    [ -z "${ip}" ] && ip="192.168.1.1"
+    echo "${ip}"
+}
+
+stop_existing() {
+    # Kill any existing proboy httpd processes
     if [ -f "${HTTPD_PID}" ]; then
         local pid=$(cat "${HTTPD_PID}" 2>/dev/null)
         if [ -n "${pid}" ] && kill -0 "${pid}" 2>/dev/null; then
-            log_info "Web server already running (PID: ${pid})"
-            return
+            kill "${pid}" 2>/dev/null || true
         fi
         rm -f "${HTTPD_PID}"
     fi
 
+    # Kill orphan processes
+    pkill -f "uhttpd.*-p.*${PORT}" 2>/dev/null || true
+    pkill -f "httpd.*-p.*${PORT}" 2>/dev/null || true
+    sleep 1
+}
+
+start_uhttpd() {
+    # Try uhttpd first (standard OpenWrt web server)
+    if ! command -v uhttpd >/dev/null 2>&1; then
+        return 1
+    fi
+
+    log_step "Starting uhttpd on port ${PORT}..."
+
+    # Create uhttpd config
+    cat > "${HTTPD_CONF}" << UEOFCFG
+config uhttpd 'proboy'
+    list listen_http '0.0.0.0:${PORT}'
+    list listen_https '0.0.0.0:$((PORT+1))'
+
+    option home '${WEB_DIR}'
+    option cgi '/cgi-bin'
+
+    list interpreter '.sh=/bin/sh'
+    list interpreter '.py=/usr/bin/python3'
+
+    option index_page 'index.html'
+    option error_page '404=/index.html'
+UEOFCFG
+
+    # Start uhttpd with our config
+    uhttpd -f -c "${HTTPD_CONF}" &
+    local pid=$!
+    if [ -n "${pid}" ]; then
+        echo "${pid}" > "${HTTPD_PID}"
+        log_info "uhttpd started (PID: ${pid})"
+        log_info "URL: http://$(get_ip):${PORT}"
+        return 0
+    fi
+    return 1
+}
+
+start_busybox_httpd() {
+    if ! command -v httpd >/dev/null 2>&1; then
+        return 1
+    fi
+
+    log_step "Starting busybox httpd on port ${PORT}..."
+
+    # Create httpd config for CGI
+    mkdir -p "${CONFIG_DIR}"
+    cat > "${CONFIG_DIR}/busybox-httpd.conf" << 'BBCFG'
+# BusyBox httpd configuration
+# CGI scripts location
+/cgi-bin:/opt/proboy/web/cgi-bin
+BBCFG
+
+    # Start httpd with CGI support
+    httpd -p "${PORT}" -h "${WEB_DIR}" -c "${CONFIG_DIR}/busybox-httpd.conf" -f &
+    local pid=$!
+    if [ -n "${pid}" ]; then
+        echo "${pid}" > "${HTTPD_PID}"
+        log_info "httpd started (PID: ${pid})"
+        log_info "URL: http://$(get_ip):${PORT}"
+        return 0
+    fi
+    return 1
+}
+
+start_simple_server() {
+    # Fallback: simple netcat-based server (very basic, no CGI)
+    log_warn "Using simple fallback server (no CGI API)"
+
+    # Create a simple shell script server
+    cat > "${PID_DIR}/simple-server.sh" << 'SEOF'
+#!/bin/sh
+PORT="$1"
+WEB_DIR="$2"
+while true; do
+    echo -e "HTTP/1.0 200 OK\r\nContent-Type: text/html\r\n\r\n$(cat ${WEB_DIR}/index.html)" | nc -l -p ${PORT} -q 1 2>/dev/null
+done
+SEOF
+    chmod +x "${PID_DIR}/simple-server.sh"
+
+    "${PID_DIR}/simple-server.sh" "${PORT}" "${WEB_DIR}" &
+    local pid=$!
+    if [ -n "${pid}" ]; then
+        echo "${pid}" > "${HTTPD_PID}"
+        log_warn "Simple server started (PID: ${pid}) - limited functionality"
+        log_info "URL: http://$(get_ip):${PORT}"
+        return 0
+    fi
+    return 1
+}
+
+start_webserver() {
     load_config
+    stop_existing
 
     if [ ! -d "${WEB_DIR}" ]; then
         log_error "Web directory not found: ${WEB_DIR}"
         return 1
     fi
 
-    log_step "Starting web server on port ${PORT}..."
-
     mkdir -p "${PID_DIR}" "${LOG_DIR}" "${WEB_DIR}/cgi-bin"
-
-    # Ensure CGI script is executable
     chmod +x "${WEB_DIR}/cgi-bin/proboy-api" 2>/dev/null || true
 
-    # Start busybox httpd
-    # -p: port, -h: home directory (document root)
-    httpd -p "${PORT}" -h "${WEB_DIR}" 2>/dev/null
-
-    if [ $? -eq 0 ]; then
-        # Save PID (httpd doesn't always write one, find it)
-        local pid=$(pgrep -f "httpd.*-p.*${PORT}" 2>/dev/null | head -1)
-        if [ -n "${pid}" ]; then
-            echo "${pid}" > "${HTTPD_PID}"
-        fi
-        log_info "Web server started on port ${PORT}"
-        log_info "URL: http://$(get_ip):${PORT}"
-    else
-        log_error "Failed to start web server"
-        return 1
+    # Try servers in order of preference
+    if start_uhttpd; then
+        return 0
     fi
+
+    if start_busybox_httpd; then
+        return 0
+    fi
+
+    if start_simple_server; then
+        return 0
+    fi
+
+    log_error "No web server available (install uhttpd or busybox httpd)"
+    return 1
 }
 
 stop_webserver() {
@@ -80,31 +187,11 @@ stop_webserver() {
         rm -f "${HTTPD_PID}"
     fi
 
-    # Also kill any orphan httpd on our port
-    local pids=$(pgrep -f "httpd.*-p.*${PORT}" 2>/dev/null)
-    if [ -n "${pids}" ]; then
-        echo "${pids}" | while read p; do
-            kill "${p}" 2>/dev/null || true
-        done
-    fi
+    pkill -f "uhttpd.*proboy" 2>/dev/null || true
+    pkill -f "httpd.*${PORT}" 2>/dev/null || true
+    pkill -f "simple-server.sh" 2>/dev/null || true
 
     log_info "Web server stopped"
-}
-
-get_ip() {
-    local ip=""
-    # Try multiple methods to get LAN IP
-    if command -v ip >/dev/null 2>&1; then
-        ip=$(ip -4 addr show br-lan 2>/dev/null | grep -oP 'inet \K[\d.]+' | head -1)
-    fi
-    if [ -z "${ip}" ] && command -v ifconfig >/dev/null 2>&1; then
-        ip=$(ifconfig br-lan 2>/dev/null | grep -oP 'inet addr:\K[\d.]+' || true)
-    fi
-    if [ -z "${ip}" ]; then
-        ip=$(hostname -I 2>/dev/null | awk '{print $1}')
-    fi
-    [ -z "${ip}" ] && ip="192.168.1.1"
-    echo "${ip}"
 }
 
 case "${1}" in
