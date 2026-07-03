@@ -15,15 +15,15 @@ function isRunning(name) {
 function sysInfo() {
     var R = {};
     try { var m = fs.read("/proc/meminfo"); if (m) { var x = m.match(/MemTotal:\s+(\d+)/); if (x) R.ram = Math.round(parseInt(x[1])/1024)+" MB"; } } catch(e) {}
-    try { var d = fs.exec("/bin/df",["-m","/"]); if (d.stdout) { var p = d.stdout.split("\n")[1].split(/\s+/); R.flash = p[3]+" MB free"; } } catch(e) {}
+    try { var d = fs.exec("/bin/df",["-m","/"]); if (d && d.stdout) { var p = d.stdout.split("\n")[1].split(/\s+/); R.flash = p[3]+" MB free"; } } catch(e) {}
     try { var c = fs.read("/proc/cpuinfo"); if (c) { var x = c.match(/model name\s*:\s*(.+)/i)||c.match(/Processor\s*:\s*(.+)/i); if (x) R.cpu = x[1].trim(); } } catch(e) {}
     try { R.cores = fs.exec("/bin/nproc").stdout.trim(); } catch(e) { R.cores="1"; }
     try { R.arch = fs.exec("/bin/uname",["-m"]).stdout.trim(); } catch(e) {}
     try { var r = fs.read("/etc/openwrt_release"); if (r) { var d = r.match(/DISTRIB_RELEASE='([^']+)'/); R.os = "OpenWrt " + (d?d[1]:"?"); } } catch(e) {}
     try { var md = fs.read("/tmp/sysinfo/model"); if (md) R.model = md.trim(); } catch(e) {}
     try { R.ver = fs.read("/opt/proboy/VERSION").trim(); } catch(e) {}
-    try { var ip = fs.exec("/bin/ip",["-4","addr","show","br-lan"]); if (ip.stdout) { var x = ip.stdout.match(/inet\s+([\d.]+)/); if (x) R.ip = x[1]; } } catch(e) {}
-    try { var rt = fs.exec("/bin/ip",["route","show","default"]); if (rt.stdout) { var x = rt.stdout.match(/via\s+([\d.]+)/); if (x) R.gw = x[1]; } } catch(e) {}
+    try { var ip = fs.exec("/bin/ip",["-4","addr","show","br-lan"]); if (ip && ip.stdout) { var x = ip.stdout.match(/inet\s+([\d.]+)/); if (x) R.ip = x[1]; } } catch(e) {}
+    try { var rt = fs.exec("/bin/ip",["route","show","default"]); if (rt && rt.stdout) { var x = rt.stdout.match(/via\s+([\d.]+)/); if (x) R.gw = x[1]; } } catch(e) {}
     try { var rs = fs.read("/tmp/resolv.conf")||fs.read("/tmp/resolv.conf.d/resolv.conf.auto"); if (rs) { var s=[]; rs.split("\n").forEach(function(l){var m=l.match(/nameserver\s+([\d.]+)/);if(m)s.push(m[1]);}); R.dns=s.join(", "); } } catch(e) {}
     try { var u = fs.read("/proc/uptime"); if (u) { var s=parseFloat(u.split(" ")[0]); R.uptime=Math.floor(s/86400)+"d "+Math.floor((s%86400)/3600)+"h "+Math.floor((s%3600)/60)+"m"; } } catch(e) {}
     return R;
@@ -39,11 +39,12 @@ return view.extend({
         s.anonymous = true;
         s.addremove = false;
 
-        /* ═══ Dashboard Tab ═══ */
+        /* ═══ Dashboard ═══ */
         s.tab("dashboard", "\u041F\u0430\u043D\u0435\u043B\u044C");
 
-        s.taboption("dashboard", form.Value, "_status", "\u0421\u0442\u0430\u0442\u0443\u0441").readonly = true;
-        s.taboption("dashboard", form.Value, "_status").cfgvalue = function() {
+        var o = s.taboption("dashboard", form.Value, "_status", "\u0421\u0442\u0430\u0442\u0443\u0441");
+        o.readonly = true;
+        o.cfgvalue = function() {
             var z = isRunning("zapret") ? "Running" : "Stopped";
             var sb = isRunning("singbox") ? "Running" : "Stopped";
             var gf = uci.get("proboy","main","gamefilter_enabled")==="1";
@@ -52,15 +53,42 @@ return view.extend({
             return "Zapret: "+z+" ("+st+") | sing-box: "+sb+" | Game: "+(gf?"On":"Off")+" | DNS: "+(dn?"On":"Off");
         };
 
-        s.taboption("dashboard", form.Value, "_sys", "\u0421\u0438\u0441\u0442\u0435\u043C\u0430").readonly = true;
-        s.taboption("dashboard", form.Value, "_sys").cfgvalue = function() {
-            return (info.os||"?")+" | "+(info.model||"?")+" | "+(info.cpu||"?")+" ("+info.cores+") | "+(info.ram||"?")+" | "+(info.flash||"?")+" | v"+(info.ver||"?")+" | "+(info.uptime||"?");
-        };
+        o = s.taboption("dashboard", form.Value, "_os", "\u041E\u0421");
+        o.readonly = true;
+        o.cfgvalue = function() { return info.os || "?"; };
 
-        /* ═══ Zapret Tab ═══ */
+        o = s.taboption("dashboard", form.Value, "_model", "\u0420\u043E\u0443\u0442\u0435\u0440");
+        o.readonly = true;
+        o.cfgvalue = function() { return info.model || "?"; };
+
+        o = s.taboption("dashboard", form.Value, "_cpu", "CPU");
+        o.readonly = true;
+        o.cfgvalue = function() { return (info.cpu||"?") + " (" + info.cores + " cores)"; };
+
+        o = s.taboption("dashboard", form.Value, "_ram", "RAM");
+        o.readonly = true;
+        o.cfgvalue = function() { return info.ram || "?"; };
+
+        o = s.taboption("dashboard", form.Value, "_flash", "Flash");
+        o.readonly = true;
+        o.cfgvalue = function() { return info.flash || "?"; };
+
+        o = s.taboption("dashboard", form.Value, "_arch", "Arch");
+        o.readonly = true;
+        o.cfgvalue = function() { return info.arch || "?"; };
+
+        o = s.taboption("dashboard", form.Value, "_ver", "\u0412\u0435\u0440\u0441\u0438\u044F");
+        o.readonly = true;
+        o.cfgvalue = function() { return info.ver || "?"; };
+
+        o = s.taboption("dashboard", form.Value, "_uptime", "Uptime");
+        o.readonly = true;
+        o.cfgvalue = function() { return info.uptime || "?"; };
+
+        /* ═══ Zapret ═══ */
         s.tab("zapret", "Zapret");
 
-        var o = s.taboption("zapret", form.Flag, "zapret_enabled", "\u0412\u043A\u043B\u044E\u0447\u0438\u0442\u044C Zapret");
+        o = s.taboption("zapret", form.Flag, "zapret_enabled", "\u0412\u043A\u043B\u044E\u0447\u0438\u0442\u044C Zapret");
         o.default = "1"; o.rmempty = false;
 
         o = s.taboption("zapret", form.ListValue, "zapret_strategy", "\u0421\u0442\u0440\u0430\u0442\u0435\u0433\u0438\u044F");
@@ -70,7 +98,7 @@ return view.extend({
         o = s.taboption("zapret", form.Flag, "failover_enabled", "Failover");
         o.default = "1"; o.rmempty = false;
 
-        /* ═══ Games Tab ═══ */
+        /* ═══ Games ═══ */
         s.tab("games", "\u0418\u0433\u0440\u044B");
 
         o = s.taboption("games", form.Flag, "gamefilter_enabled", "\u0412\u043A\u043B\u044E\u0447\u0438\u0442\u044C Game Filter");
@@ -84,7 +112,7 @@ return view.extend({
         o = s.taboption("games", form.Flag, "ps5_enabled", "PS5");
         o.default = "0"; o.rmempty = false;
 
-        /* ═══ Network Tab ═══ */
+        /* ═══ Network ═══ */
         s.tab("network", "\u0421\u0435\u0442\u044C");
 
         o = s.taboption("network", form.Flag, "dns_enabled", "\u0412\u043A\u043B\u044E\u0447\u0438\u0442\u044C DNS");
@@ -103,21 +131,24 @@ return view.extend({
         o.default = "0"; o.rmempty = false;
 
         o = s.taboption("network", form.Value, "_ip", "LAN IP");
-        o.readonly = true; o.cfgvalue = function() { return info.ip||"?"; };
+        o.readonly = true;
+        o.cfgvalue = function() { return info.ip||"?"; };
 
         o = s.taboption("network", form.Value, "_gw", "Gateway");
-        o.readonly = true; o.cfgvalue = function() { return info.gw||"?"; };
+        o.readonly = true;
+        o.cfgvalue = function() { return info.gw||"?"; };
 
         o = s.taboption("network", form.Value, "_dns", "DNS");
-        o.readonly = true; o.cfgvalue = function() { return info.dns||"?"; };
+        o.readonly = true;
+        o.cfgvalue = function() { return info.dns||"?"; };
 
-        /* ═══ Subscriptions Tab ═══ */
+        /* ═══ Subscriptions ═══ */
         s.tab("subs", "\u041F\u043E\u0434\u043F\u0438\u0441\u043A\u0438");
 
         o = s.taboption("subs", form.Value, "subscription_url", "URL");
         o.placeholder = "https://..."; o.rmempty = true;
 
-        /* ═══ Settings Tab ═══ */
+        /* ═══ Settings ═══ */
         s.tab("settings", "\u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438");
 
         o = s.taboption("settings", form.Flag, "enabled", "\u0412\u043A\u043B\u044E\u0447\u0438\u0442\u044C Proboy");
