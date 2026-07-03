@@ -1,0 +1,13 @@
+{
+    "admin/services/proboy": {
+        "title": "Proboy",
+        "order": 90,
+        "action": { "type": "firstchild" },
+        "children": {}
+    },
+    "admin/services/proboy/main": {
+        "title": "Proboy",
+        "order": 1,
+        "action": { "type": "call", "method": "proboy_index" }
+    }
+}
