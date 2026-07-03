@@ -1,9 +1,21 @@
 {
-  "name": "PlayStation Network",
+  "name": "Sony / PlayStation",
+  "description": "PlayStation Network, PS5/PS4",
+  "updated": "2025-01-01",
   "ports": {
-    "tcp": [80, 443, 1935, 3478, 3479, 3480, 10070, 10071, 10072, 10080],
-    "udp": [3478, 3479, 3480, 3658, 1935, 52000, 52001, 52002, 52003, 52004, 52005]
+    "tcp": [80, 443, 1935, 3478, 3479, 3480, 5223, 5224, 10070, 10071, 10072, 10073, 10074, 10075, 10080, 3074],
+    "udp": [88, 3074, 3478, 3479, 3658, 1935, 10070, 10071, 10072, 10073, 10074, 10075, 52000, 52001, 52002, 52003, 52004, 52005]
   },
-  "domains": ["playstation.com", "sony.com", "playstationnetwork.com", "cdn.playstation.com"],
-  "description": "PS5/PS4 online gaming, PSN Store, voice chat"
+  "domains": [
+    "playstation.com",
+    "playstation.net",
+    "playstationnetwork.com",
+    "sony.com",
+    "sonyentertainmentnetwork.com",
+    "psn.playstation.com",
+    "store.playstation.com",
+    "cdn.playstation.com",
+    "ae01.ssl.playstation.com"
+  ],
+  "note": "PS5 MAC prefix: AC:DE:48 for auto-detection"
 }

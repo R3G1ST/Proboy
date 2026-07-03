@@ -1,10 +1,10 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.0.0-00e5ff?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/version-1.0.0%20Phoenix-00e5ff?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/status-ALPHA-ff9100?style=for-the-badge" alt="ALPHA">
   <img src="https://img.shields.io/badge/license-MIT-00e676?style=for-the-badge" alt="License">
   <img src="https://img.shields.io/badge/OpenWrt-24.10+-00bcd4?style=for-the-badge" alt="OpenWrt">
   <img src="https://img.shields.io/badge/Hysteria-2.9.3-ff6b35?style=for-the-badge" alt="Hysteria2">
   <img src="https://img.shields.io/badge/zapret-v72.12-9b59b6?style=for-the-badge" alt="zapret">
-  <img src="https://img.shields.io/badge/Python-3.10+-3776ab?style=for-the-badge&logo=python&logoColor=white" alt="Python">
 </p>
 
 <p align="center">
@@ -24,6 +24,8 @@
 ---
 
 ### Что такое Proboy?
+
+> ⚠️ **ALPHA VERSION** — Проект находится в стадии альфа-тестирования. Возможны ошибки и нестабильная работа.
 
 Proboy — это анти-цензурный пакет для OpenWrt роутеров, который объединяет:
 
@@ -65,6 +67,12 @@ proboy start      # Запустить все сервисы
 proboy stop       # Остановить все сервисы
 proboy restart    # Перезапустить
 proboy status     # Показать статус
+```
+
+### Удаление
+
+```bash
+/opt/proboy/uninstall.sh
 ```
 
 ---
@@ -210,6 +218,8 @@ MIT License — см. [LICENSE](LICENSE)
 
 ### What is Proboy?
 
+> ⚠️ **ALPHA VERSION** — This project is in alpha testing. Bugs and instability may occur.
+
 Proboy is an anti-censorship package for OpenWrt routers that combines:
 
 | Component | Description |
@@ -250,6 +260,12 @@ proboy start      # Start all services
 proboy stop       # Stop all services
 proboy restart    # Restart all services
 proboy status     # Show status
+```
+
+### Uninstall
+
+```bash
+/opt/proboy/uninstall.sh
 ```
 
 ---

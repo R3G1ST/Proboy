@@ -3,233 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Proboy x FreeLink — Internet Freedom for People</title>
+    <title>Proboy v1.0.0 Phoenix (ALPHA)</title>
     <link rel="stylesheet" href="css/proboy.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
 </head>
 <body>
-    <!-- Sidebar -->
-    <nav class="sidebar">
-        <div class="sidebar-brand">
-            <h1>⚡ Proboy</h1>
-            <p>x FreeLink</p>
-        </div>
-        <ul class="nav-links">
-            <li><a href="#" class="active" data-page="dashboard">📊 Dashboard</a></li>
-            <li><a href="#" data-page="combo">🎯 Combo Builder</a></li>
-            <li><a href="#" data-page="zapret">🛡️ Zapret (DPI)</a></li>
-            <li><a href="#" data-page="games">🎮 Games & PS5</a></li>
-            <li><a href="#" data-page="network">🔍 Network</a></li>
-            <li><a href="#" data-page="subscriptions">📡 Subscriptions</a></li>
-            <li><a href="#" data-page="settings">⚙️ Settings</a></li>
-            <li><a href="#" data-page="authors">👥 Authors</a></li>
-        </ul>
-        <div class="sidebar-footer">
-            <p>Proboy x FreeLink</p>
-            <p>v1.0.0</p>
-        </div>
-    </nav>
-
-    <!-- Main content -->
-    <main class="content">
-        <!-- Dashboard -->
-        <section id="dashboard" class="page active">
-            <h2>Dashboard</h2>
-            <div class="status-grid">
-                <div class="status-card green">
-                    <h3>🛡️ Zapret</h3>
-                    <p id="zapret-status">Checking...</p>
-                    <span class="badge" id="zapret-strategy">auto</span>
+    <div class="app">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <span class="logo-icon">⚡</span>
+                    <span class="logo-text">Proboy</span>
                 </div>
-                <div class="status-card blue">
-                    <h3>🎮 Game Filter</h3>
-                    <p id="gamefilter-status">Checking...</p>
-                    <span class="badge" id="gamefilter-mode">universal</span>
+                <span class="logo-sub">x FreeLink</span>
+            </div>
+
+            <ul class="nav-menu">
+                <li class="nav-item active" data-page="dashboard">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-label">Dashboard</span>
+                </li>
+                <li class="nav-item" data-page="combo">
+                    <span class="nav-icon">⚡</span>
+                    <span class="nav-label">Combo Builder</span>
+                </li>
+                <li class="nav-item" data-page="proxy">
+                    <span class="nav-icon">🔗</span>
+                    <span class="nav-label">Proxy</span>
+                </li>
+                <li class="nav-item" data-page="zapret">
+                    <span class="nav-icon">🛡️</span>
+                    <span class="nav-label">Zapret</span>
+                </li>
+                <li class="nav-item" data-page="games">
+                    <span class="nav-icon">🎮</span>
+                    <span class="nav-label">Games</span>
+                </li>
+                <li class="nav-item" data-page="network">
+                    <span class="nav-icon">🔍</span>
+                    <span class="nav-label">Network</span>
+                </li>
+                <li class="nav-item" data-page="subscriptions">
+                    <span class="nav-icon">📡</span>
+                    <span class="nav-label">Subscriptions</span>
+                </li>
+                <li class="nav-item" data-page="authors">
+                    <span class="nav-icon">👥</span>
+                    <span class="nav-label">Authors</span>
+                </li>
+                <li class="nav-item" data-page="settings">
+                    <span class="nav-icon">⚙️</span>
+                    <span class="nav-label">Settings</span>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <div class="version-info">
+                    <span class="version-tag">v1.0.0 Phoenix</span>
+                    <span class="alpha-tag">ALPHA</span>
                 </div>
-                <div class="status-card purple">
-                    <h3>📡 sing-box</h3>
-                    <p id="singbox-status">Checking...</p>
-                    <span class="badge" id="singbox-protocol">-</span>
-                </div>
-                <div class="status-card orange">
-                    <h3>🔒 DNS</h3>
-                    <p id="dns-status">Checking...</p>
-                    <span class="badge" id="dns-provider">cloudflare</span>
-                </div>
-            </div>
-
-            <div class="controls">
-                <button class="btn btn-green" onclick="proboyAction('start')">▶ Start All</button>
-                <button class="btn btn-red" onclick="proboyAction('stop')">⏹ Stop All</button>
-                <button class="btn btn-blue" onclick="proboyAction('restart')">🔄 Restart</button>
-                <button class="btn btn-yellow" onclick="networkAnalysis()">🔍 Network Test</button>
-            </div>
-
-            <div class="info-panel">
-                <h3>System Info</h3>
-                <div id="system-info">Loading...</div>
-            </div>
-        </section>
-
-        <!-- Combo Builder -->
-        <section id="combo" class="page">
-            <h2>🎯 Combo Builder — Собери свой Proboy</h2>
-            <p>Выбери что тебе нужно, система настроит всё автоматически:</p>
-            <div class="combo-grid" id="combo-grid"></div>
-            <div class="controls">
-                <button class="btn btn-green" onclick="applyCombo()">⚡ Применить Комбо</button>
-                <button class="btn btn-blue" onclick="savePreset()">💾 Сохранить пресет</button>
-            </div>
-        </section>
-
-        <!-- Zapret -->
-        <section id="zapret" class="page">
-            <h2>🛡️ Zapret — DPI Bypass</h2>
-            <div class="settings-panel">
-                <h3>Strategy</h3>
-                <select id="zapret-strategy-select">
-                    <option value="auto">Auto (recommended)</option>
-                    <option value="general">General</option>
-                    <option value="fake-tls-auto">FAKE TLS AUTO</option>
-                    <option value="discord">Discord</option>
-                    <option value="youtube">YouTube</option>
-                    <option value="telegram">Telegram</option>
-                    <option value="gaming">Gaming</option>
-                    <option value="fortnite">Fortnite</option>
-                    <option value="cs2">CS2</option>
-                    <option value="psn">PlayStation</option>
-                    <option value="aggressive">Aggressive</option>
-                </select>
-                <button class="btn btn-blue" onclick="applyZapretStrategy()">Apply</button>
-            </div>
-            <div class="settings-panel">
-                <h3>Domain List</h3>
-                <textarea id="domains-list" rows="10" placeholder="youtube.com&#10;discord.com&#10;telegram.org"></textarea>
-                <button class="btn btn-green" onclick="saveDomains()">💾 Save</button>
-            </div>
-        </section>
-
-        <!-- Games & PS5 -->
-        <section id="games" class="page">
-            <h2>🎮 Games & PS5</h2>
-            <div class="settings-panel">
-                <h3>Game Filter</h3>
-                <label><input type="checkbox" id="gamefilter-toggle" checked> Enable Game Filter</label>
-                <p>Automatically detects and routes game traffic through zapret.</p>
-            </div>
-            <div class="settings-panel">
-                <h3>PS5 Console</h3>
-                <label><input type="checkbox" id="ps5-toggle"> Enable PS5 Support</label>
-                <p>Auto-detect PS5 by MAC address, configure NAT Type 2, route PSN traffic.</p>
-                <input type="text" id="ps5-mac" placeholder="AC:DE:48:XX:XX:XX" />
-                <button class="btn btn-blue" onclick="detectPS5()">🔍 Detect PS5</button>
-            </div>
-            <div class="settings-panel">
-                <h3>Supported Games</h3>
-                <div class="game-list">
-                    <div class="game-item">🎮 Steam (CS2, Dota2, TF2)</div>
-                    <div class="game-item">🎯 Epic Games (Fortnite)</div>
-                    <div class="game-item">⚔️ Riot (Valorant, LoL)</div>
-                    <div class="game-item">🌍 Blizzard (Overwatch, WoW)</div>
-                    <div class="game-item">🏆 EA (FIFA, Apex, Battlefield)</div>
-                    <div class="game-item">🎯 Ubisoft (R6, For Honor)</div>
-                    <div class="game-item">🎮 PS5 (all PSN games)</div>
-                    <div class="game-item">🟢 Xbox (all Xbox Live games)</div>
-                    <div class="game-item">🔴 Nintendo (Switch Online)</div>
+                <div class="status-indicator">
+                    <span class="status-dot" id="statusDot"></span>
+                    <span class="status-text" id="statusText">Checking...</span>
                 </div>
             </div>
-        </section>
+        </nav>
 
-        <!-- Network -->
-        <section id="network" class="page">
-            <h2>🔍 Network Analyzer</h2>
-            <div class="controls">
-                <button class="btn btn-green" onclick="networkAnalysis()">🔍 Start Full Analysis</button>
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page" id="page-dashboard">
+                <div class="page-header">
+                    <h1>Dashboard</h1>
+                    <p>Proboy x FreeLink — Internet Freedom for People</p>
+                </div>
+                <div class="cards-grid">
+                    <div class="card">
+                        <div class="card-icon" style="background: #00d2ff33;">🛡️</div>
+                        <div class="card-content">
+                            <h3>Zapret</h3>
+                            <p class="status status-ok" id="zapretStatus">Running</p>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon" style="background: #7c3aed33;">🔗</div>
+                        <div class="card-content">
+                            <h3>sing-box</h3>
+                            <p class="status" id="singboxStatus">Stopped</p>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon" style="background: #10b98133;">🎮</div>
+                        <div class="card-content">
+                            <h3>Game Filter</h3>
+                            <p class="status status-ok" id="gameStatus">Enabled</p>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon" style="background: #f59e0b33;">📡</div>
+                        <div class="card-content">
+                            <h3>Subscription</h3>
+                            <p class="status" id="subStatus">Not configured</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h2>System Info</h2>
+                    </div>
+                    <div class="card-body" id="systemInfo">
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="info-label">OS</span>
+                                <span class="info-value" id="infoOS">Detecting...</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Router</span>
+                                <span class="info-value" id="infoRouter">Detecting...</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">CPU</span>
+                                <span class="info-value" id="infoCPU">Detecting...</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">RAM</span>
+                                <span class="info-value" id="infoRAM">Detecting...</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Flash</span>
+                                <span class="info-value" id="infoFlash">Detecting...</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Architecture</span>
+                                <span class="info-value" id="infoArch">Detecting...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div id="network-results" class="settings-panel">
-                <p>Click "Start Full Analysis" to detect DPI type, blocked ports, and auto-configure.</p>
-            </div>
-        </section>
 
-        <!-- Subscriptions -->
-        <section id="subscriptions" class="page">
-            <h2>📡 Subscriptions</h2>
-            <div class="settings-panel">
-                <h3>Add Subscription</h3>
-                <select id="sub-type">
-                    <option value="freelink">FreeLink Native</option>
-                    <option value="clash">Clash</option>
-                    <option value="v2ray">v2rayN</option>
-                    <option value="singbox">Sing-box</option>
-                    <option value="wireguard">WireGuard</option>
-                </select>
-                <input type="url" id="sub-url" placeholder="https://example.com/subscribe..." />
-                <button class="btn btn-green" onclick="addSubscription()">📥 Import</button>
-            </div>
-            <div class="settings-panel">
-                <h3>Active Subscriptions</h3>
-                <div id="subscriptions-list">No subscriptions configured.</div>
-            </div>
-        </section>
-
-        <!-- Settings -->
-        <section id="settings" class="page">
-            <h2>⚙️ Settings</h2>
-            <div class="settings-panel">
-                <h3>System</h3>
-                <div id="system-details"></div>
-            </div>
-            <div class="controls">
-                <button class="btn btn-yellow" onclick="proboyAction('restart')">🔄 Restart Proboy</button>
-            </div>
-        </section>
-
-        <!-- Authors -->
-        <section id="authors" class="page">
-            <h2>👥 Authors & Credits</h2>
-            <div class="authors-panel">
-                <h3>Project Authors</h3>
-                <table class="authors-table">
-                    <tr>
-                        <td><strong>R3G1ST</strong></td>
-                        <td>FreeLink + Proboy (author)</td>
-                        <td><a href="https://github.com/R3G1ST" target="_blank">github.com/R3G1ST</a></td>
-                    </tr>
-                </table>
-
-                <h3>Core Dependencies</h3>
-                <table class="authors-table">
-                    <tr><td><strong>bol-van</strong></td><td><a href="https://github.com/bol-van/zapret" target="_blank">zapret</a></td><td>15.6k ⭐</td><td>DPI bypass engine</td></tr>
-                    <tr><td><strong>Flowseal</strong></td><td><a href="https://github.com/Flowseal/zapret-discord-youtube" target="_blank">zapret-discord-youtube</a></td><td>30.4k ⭐</td><td>Tested DPI strategies</td></tr>
-                    <tr><td><strong>apernet</strong></td><td><a href="https://github.com/apernet/hysteria" target="_blank">Hysteria 2</a></td><td>22k ⭐</td><td>QUIC proxy protocol</td></tr>
-                    <tr><td><strong>SagerNet</strong></td><td><a href="https://github.com/SagerNet/sing-box" target="_blank">sing-box</a></td><td>16k ⭐</td><td>Universal proxy platform</td></tr>
-                    <tr><td><strong>itdoginfo</strong></td><td><a href="https://github.com/itdoginfo/podkop" target="_blank">podkop</a></td><td>2k ⭐</td><td>Architecture inspiration</td></tr>
-                    <tr><td><strong>OpenWrt</strong></td><td><a href="https://github.com/openwrt/openwrt" target="_blank">OpenWrt</a></td><td>-</td><td>Router OS</td></tr>
-                </table>
-
-                <h3>Strategy Authors</h3>
-                <table class="authors-table">
-                    <tr><td><strong>bol-van</strong></td><td>Original zapret strategies</td></tr>
-                    <tr><td><strong>Flowseal</strong></td><td>Community-tested strategies</td></tr>
-                    <tr><td><strong>Proboy community</strong></td><td>Gaming strategies</td></tr>
-                </table>
-
-                <h3>Acknowledgments</h3>
-                <ul>
-                    <li><strong>bol-van</strong> — for creating zapret</li>
-                    <li><strong>Flowseal</strong> — for testing strategies against Russian DPI</li>
-                    <li><strong>itdoginfo</strong> — for podkop (architecture inspiration)</li>
-                    <li><strong>apernet</strong> — for Hysteria2</li>
-                    <li><strong>SagerNet</strong> — for sing-box</li>
-                    <li><strong>OpenWrt community</strong> — for the router OS</li>
-                    <li><strong>All contributors</strong> — who test and improve</li>
-                </ul>
-
-                <p><strong>License:</strong> MIT</p>
-                <p><a href="https://github.com/R3G1ST/Proboy" target="_blank">github.com/R3G1ST/Proboy</a> | <a href="https://github.com/R3G1ST/FreeLink" target="_blank">github.com/R3G1ST/FreeLink</a></p>
-            </div>
-        </section>
-    </main>
+            <!-- Pages loaded dynamically -->
+            <div class="page" id="page-combo" style="display:none;"></div>
+            <div class="page" id="page-proxy" style="display:none;"></div>
+            <div class="page" id="page-zapret" style="display:none;"></div>
+            <div class="page" id="page-games" style="display:none;"></div>
+            <div class="page" id="page-network" style="display:none;"></div>
+            <div class="page" id="page-subscriptions" style="display:none;"></div>
+            <div class="page" id="page-authors" style="display:none;"></div>
+            <div class="page" id="page-settings" style="display:none;"></div>
+        </main>
+    </div>
 
     <script src="js/app.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/i18n.js"></script>
 </body>
 </html>

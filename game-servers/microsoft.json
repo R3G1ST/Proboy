@@ -1,9 +1,20 @@
 {
-  "name": "Xbox Live",
+  "name": "Microsoft / Xbox",
+  "description": "Xbox Live, Xbox Cloud Gaming",
+  "updated": "2025-01-01",
   "ports": {
-    "tcp": [80, 443, 3074],
-    "udp": [88, 3074, 3075, 3076, 3077, 3078, 3079, 3080, 3081, 3082, 3083, 3084, 3085, 3086, 3087, 3088]
+    "tcp": [80, 443, 3074, 3075, 3076, 3077, 3078, 3079, 3080, 88, 500, 3544, 4500, 10246, 10247],
+    "udp": [88, 3074, 3075, 3076, 3077, 3078, 3079, 3080, 500, 3544, 4500, 10246, 10247, 3330, 3331, 3332, 3333, 3389, 3390, 27015, 27016, 27017, 27018, 27019, 27020]
   },
-  "domains": ["xbox.com", "xboxlive.com", "microsoft.com"],
-  "description": "Xbox Live online gaming"
+  "domains": [
+    "xbox.com",
+    "xboxlive.com",
+    "accounts.xbox.com",
+    "signin.xbox.com",
+    "www.xbox.com",
+    "gamepass.com",
+    "xboxcloudgaming.com",
+    "xbox.com.cn"
+  ],
+  "note": "Xbox uses IPSEC (500, 3544, 4500) for Xbox Live party chat"
 }

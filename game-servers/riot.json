@@ -1,9 +1,19 @@
 {
   "name": "Riot Games",
+  "description": "League of Legends, Valorant, and other Riot games",
+  "updated": "2025-01-01",
   "ports": {
-    "tcp": [443, 80, 5000, 5001, 5002, 5003, 5004, 5005],
-    "udp": [5000, 5001, 5002, 5003, 5004, 5005]
+    "tcp": [80, 443, 2099, 5222, 5223, 8393, 8400, 8443],
+    "udp": [5000, 5001, 5002, 5003, 5004, 5005, 5006, 5007, 5008, 5009, 5010, 5120, 5121, 7175, 8393, 8394, 27015, 27016, 27017, 27018, 27019, 27020]
   },
-  "domains": ["leagueoflegends.com", "playvalorant.com", "riotgames.com"],
-  "description": "League of Legends, Valorant, and other Riot games"
+  "domains": [
+    "riotgames.com",
+    "leagueoflegends.com",
+    "playvalorant.com",
+    "riotcdn.net",
+    "riotgames.net",
+    "lolstatic-a.akamaihd.net",
+    "ligofria.com"
+  ],
+  "note": "LoL uses 5000-5010 UDP, Valorant uses 7175 UDP"
 }
