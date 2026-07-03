@@ -34,67 +34,70 @@ return view.extend({
         var m = new form.Map("proboy", "\u041F\u0440\u043E\u0431\u043E\u0439", "Anti-censorship suite");
         m.tabbed = true;
         var info = sysInfo();
-        var zapret = isRunning("zapret"), singbox = isRunning("singbox");
-        var gf = uci.get("proboy","main","gamefilter_enabled")==="1";
-        var dn = uci.get("proboy","main","dns_enabled")==="1";
-        var strat = uci.get("proboy","main","zapret_strategy")||"auto";
 
-        /* ─── Dashboard ─── */
-        var s1 = m.section(form.TypedSection, "proboy", "\u041F\u0430\u043D\u0435\u043B\u044C");
+        /* ═══ Dashboard (UCI type: dashboard) ═══ */
+        var s1 = m.section(form.TypedSection, "dashboard", "\u041F\u0430\u043D\u0435\u043B\u044C");
         s1.anonymous = true;
         s1.addremove = false;
+        s1.cfgsections = function() { return ["main"]; };
 
         var o = s1.option(form.Value, "_status", "\u0421\u0442\u0430\u0442\u0443\u0441");
         o.readonly = true;
         o.cfgvalue = function() {
-            var z = zapret ? "Running" : "Stopped";
-            var s = singbox ? "Running" : "Stopped";
-            return "Zapret: " + z + " (" + strat + ") | sing-box: " + s + " | Game: " + (gf?"On":"Off") + " | DNS: " + (dn?"On":"Off");
+            var z = isRunning("zapret") ? "Running" : "Stopped";
+            var s = isRunning("singbox") ? "Running" : "Stopped";
+            var gf = uci.get("proboy","main","gamefilter_enabled")==="1";
+            var dn = uci.get("proboy","main","dns_enabled")==="1";
+            var st = uci.get("proboy","main","zapret_strategy")||"auto";
+            return "Zapret: "+z+" ("+st+") | sing-box: "+s+" | Game: "+(gf?"On":"Off")+" | DNS: "+(dn?"On":"Off");
         };
 
         o = s1.option(form.Value, "_sys", "\u0421\u0438\u0441\u0442\u0435\u043C\u0430");
         o.readonly = true;
         o.cfgvalue = function() {
-            return (info.os||"?") + " | " + (info.model||"?") + " | " + (info.cpu||"?") + " (" + info.cores + ") | " + (info.ram||"?") + " | " + (info.flash||"?") + " | v" + (info.ver||"?") + " | " + (info.uptime||"?");
+            return (info.os||"?")+" | "+(info.model||"?")+" | "+(info.cpu||"?")+" ("+info.cores+") | "+(info.ram||"?")+" | "+(info.flash||"?")+" | v"+(info.ver||"?")+" | "+(info.uptime||"?");
         };
 
-        /* ─── Zapret ─── */
-        var s2 = m.section(form.TypedSection, "proboy", "Zapret");
+        /* ═══ Zapret (UCI type: zapret) ═══ */
+        var s2 = m.section(form.TypedSection, "zapret", "Zapret");
         s2.anonymous = true;
         s2.addremove = false;
+        s2.cfgsections = function() { return ["main"]; };
 
-        o = s2.option(form.Flag, "zapret_enabled", "\u0412\u043A\u043B\u044E\u0447\u0438\u0442\u044C Zapret");
+        o = s2.option(form.Flag, "enabled", "\u0412\u043A\u043B\u044E\u0447\u0438\u0442\u044C Zapret");
         o.default = "1"; o.rmempty = false;
 
-        o = s2.option(form.ListValue, "zapret_strategy", "\u0421\u0442\u0440\u0430\u0442\u0435\u0433\u0438\u044F");
+        o = s2.option(form.ListValue, "strategy", "\u0421\u0442\u0440\u0430\u0442\u0435\u0433\u0438\u044F");
         [["auto","\u0410\u0432\u0442\u043E"],["general","\u041E\u0431\u0449\u0430\u044F"],["general-alt","\u041E\u0431\u0449\u0430\u044F ALT"],["fake-tls-auto","FAKE TLS AUTO"],["fake-tls-auto-alt","FAKE TLS AUTO ALT"],["simple-fake","SIMPLE FAKE"],["discord","Discord"],["youtube","YouTube"],["telegram","Telegram"],["gaming","\u0418\u0433\u0440\u044B"],["fortnite","Fortnite"],["cs2","CS2"],["psn","PlayStation Network"],["steam","Steam"],["epic","Epic Games"],["alt1","ALT 1"],["alt2","ALT 2"],["alt3","ALT 3"],["alt4","ALT 4"],["alt5","ALT 5"],["alt6","ALT 6"],["alt7","ALT 7"],["alt8","ALT 8"],["alt9","ALT 9"],["alt10","ALT 10"],["alt11","ALT 11"],["alt12","ALT 12"],["aggressive","\u0410\u0433\u0440\u0435\u0441\u0441\u0438\u0432\u043D\u0430\u044F"]].forEach(function(x){o.value(x[0],x[1]);});
         o.default = "auto";
 
-        o = s2.option(form.Flag, "failover_enabled", "Failover");
+        o = s2.option(form.Flag, "failover", "Failover");
         o.default = "1"; o.rmempty = false;
 
-        /* ─── Games ─── */
-        var s3 = m.section(form.TypedSection, "proboy", "\u0418\u0433\u0440\u044B");
+        /* ═══ Games (UCI type: games) ═══ */
+        var s3 = m.section(form.TypedSection, "games", "\u0418\u0433\u0440\u044B");
         s3.anonymous = true;
         s3.addremove = false;
+        s3.cfgsections = function() { return ["main"]; };
 
-        o = s3.option(form.Flag, "gamefilter_enabled", "\u0412\u043A\u043B\u044E\u0447\u0438\u0442\u044C Game Filter");
+        o = s3.option(form.Flag, "enabled", "\u0412\u043A\u043B\u044E\u0447\u0438\u0442\u044C Game Filter");
         o.default = "1"; o.rmempty = false;
 
-        o = s3.option(form.ListValue, "gamefilter_mode", "\u0420\u0435\u0436\u0438\u043C");
+        o = s3.option(form.ListValue, "mode", "\u0420\u0435\u0436\u0438\u043C");
         o.value("universal", "\u0423\u043D\u0438\u0432\u0435\u0440\u0441\u0430\u043B\u044C\u043D\u044B\u0439");
         o.value("custom", "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C\u0441\u043A\u0438\u0439");
         o.default = "universal";
 
-        o = s3.option(form.Flag, "ps5_enabled", "PS5 \u0410\u0432\u0442\u043E\u043E\u043F\u0440\u0435\u0434\u0435\u043B\u0435\u043D\u0438\u0435");
+        o = s3.option(form.Flag, "ps5", "PS5");
         o.default = "0"; o.rmempty = false;
 
-        /* ─── Network ─── */
-        var s4 = m.section(form.TypedSection, "proboy", "\u0421\u0435\u0442\u044C");
+        /* ═══ Network (UCI type: network) ═══ */
+        var s4 = m.section(form.TypedSection, "network", "\u0421\u0435\u0442\u044C");
         s4.anonymous = true;
         s4.addremove = false;
+        s4.cfgsections = function() { return ["main"]; };
 
-        o = s4.option(form.Flag, "dns_enabled", "\u0412\u043A\u043B\u044E\u0447\u0438\u0442\u044C DNS Bypass");
+        o = s4.option(form.Flag, "dns", "\u0412\u043A\u043B\u044E\u0447\u0438\u0442\u044C DNS");
         o.default = "1"; o.rmempty = false;
 
         o = s4.option(form.ListValue, "dns_provider", "DNS");
@@ -103,34 +106,36 @@ return view.extend({
         o.value("adguard", "AdGuard");
         o.default = "cloudflare";
 
-        o = s4.option(form.Flag, "youtube_enabled", "YouTube");
+        o = s4.option(form.Flag, "youtube", "YouTube");
         o.default = "1"; o.rmempty = false;
 
-        o = s4.option(form.Flag, "ipv6_enabled", "IPv6");
+        o = s4.option(form.Flag, "ipv6", "IPv6");
         o.default = "0"; o.rmempty = false;
 
         o = s4.option(form.Value, "_ip", "LAN IP");
-        o.readonly = true; o.cfgvalue = function() { return info.ip || "?"; };
+        o.readonly = true; o.cfgvalue = function() { return info.ip||"?"; };
 
         o = s4.option(form.Value, "_gw", "Gateway");
-        o.readonly = true; o.cfgvalue = function() { return info.gw || "?"; };
+        o.readonly = true; o.cfgvalue = function() { return info.gw||"?"; };
 
         o = s4.option(form.Value, "_dns", "DNS");
-        o.readonly = true; o.cfgvalue = function() { return info.dns || "?"; };
+        o.readonly = true; o.cfgvalue = function() { return info.dns||"?"; };
 
-        /* ─── Subscriptions ─── */
-        var s5 = m.section(form.TypedSection, "proboy", "\u041F\u043E\u0434\u043F\u0438\u0441\u043A\u0438");
+        /* ═══ Subscriptions (UCI type: subs) ═══ */
+        var s5 = m.section(form.TypedSection, "subs", "\u041F\u043E\u0434\u043F\u0438\u0441\u043A\u0438");
         s5.anonymous = true;
         s5.addremove = false;
+        s5.cfgsections = function() { return ["main"]; };
 
-        o = s5.option(form.Value, "subscription_url", "URL \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0438");
+        o = s5.option(form.Value, "url", "URL");
         o.placeholder = "https://...";
         o.rmempty = true;
 
-        /* ─── Settings ─── */
-        var s6 = m.section(form.TypedSection, "proboy", "\u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438");
+        /* ═══ Settings (UCI type: settings) ═══ */
+        var s6 = m.section(form.TypedSection, "settings", "\u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438");
         s6.anonymous = true;
         s6.addremove = false;
+        s6.cfgsections = function() { return ["main"]; };
 
         o = s6.option(form.Flag, "enabled", "\u0412\u043A\u043B\u044E\u0447\u0438\u0442\u044C Proboy");
         o.default = "1"; o.rmempty = false;
@@ -140,7 +145,7 @@ return view.extend({
         o.value("en", "English");
         o.default = "ru";
 
-        o = s6.option(form.Flag, "web_enabled", "\u0412\u0435\u0431-\u043F\u0430\u043D\u0435\u043B\u044C");
+        o = s6.option(form.Flag, "web", "\u0412\u0435\u0431-\u043F\u0430\u043D\u0435\u043B\u044C");
         o.default = "1"; o.rmempty = false;
 
         o = s6.option(form.Value, "web_port", "\u041F\u043E\u0440\u0442");

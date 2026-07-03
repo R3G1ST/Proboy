@@ -510,18 +510,32 @@ install_luci() {
 config proboy 'main'
     option enabled '1'
     option language 'ru'
-    option zapret_enabled '1'
-    option zapret_strategy 'auto'
-    option gamefilter_enabled '1'
-    option gamefilter_mode 'universal'
-    option ps5_enabled '0'
-    option dns_enabled '1'
+
+config dashboard 'main'
+
+config zapret 'main'
+    option enabled '1'
+    option strategy 'auto'
+    option failover '1'
+
+config games 'main'
+    option enabled '1'
+    option mode 'universal'
+    option ps5 '0'
+
+config network 'main'
+    option dns '1'
     option dns_provider 'cloudflare'
-    option youtube_enabled '1'
-    option ipv6_enabled '0'
-    option failover_enabled '1'
-    option subscription_url ''
-    option web_enabled '1'
+    option youtube '1'
+    option ipv6 '0'
+
+config subs 'main'
+    option url ''
+
+config settings 'main'
+    option enabled '1'
+    option language 'ru'
+    option web '1'
     option web_port '8080'
 UCIEOF
     fi
