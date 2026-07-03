@@ -16,12 +16,14 @@ async function sysInfo() {
     var R = {};
     try { var m = await fs.read("/proc/meminfo"); if (m) { var x = m.match(/MemTotal:\s+(\d+)/); if (x) R.ram = Math.round(parseInt(x[1])/1024)+" MB"; } } catch(e) {}
     try { var d = await fs.exec("/bin/df",["-m","/"]); if (d && d.stdout) { var p = d.stdout.split("\n")[1].split(/\s+/); R.flash = p[3]+" MB free"; } } catch(e) {}
-    try { var c = await fs.read("/proc/cpuinfo"); if (c) { var x = c.match(/model name\s*:\s*(.+)/i)||c.match(/Processor\s*:\s*(.+)/i); if (x) R.cpu = x[1].trim(); } } catch(e) {}
+    try { var c = await fs.read("/proc/cpuinfo"); if (c) { var x = c.match(/model name\s*:\s*(.+)/i)||c.match(/Processor\s*:\s*(.+)/i)||c.match(/Hardware\s*:\s*(.+)/i)||c.match(/CPU implementer\s*:\s*(.+)/i); if (x) R.cpu = x[1].trim(); } } catch(e) {}
     try { var n = await fs.exec("/bin/nproc"); if (n && n.stdout) R.cores = n.stdout.trim(); } catch(e) { R.cores="1"; }
     try { var u = await fs.exec("/bin/uname",["-m"]); if (u && u.stdout) R.arch = u.stdout.trim(); } catch(e) {}
     try { var r = await fs.read("/etc/openwrt_release"); if (r) { var d = r.match(/DISTRIB_RELEASE='([^']+)'/); R.os = "OpenWrt " + (d?d[1]:"?"); } } catch(e) {}
     try { var md = await fs.read("/tmp/sysinfo/model"); if (md) R.model = md.trim(); } catch(e) {}
-    try { R.ver = (await fs.read("/opt/proboy/VERSION")).trim(); } catch(e) {}
+    try { R.ver = (await fs.trimmed("/opt/proboy/VERSION")); } catch(e) {}
+    if (!R.ver) try { R.ver = (await fs.trimmed("/etc/proboy/VERSION")); } catch(e) {}
+    if (!R.ver) try { var v = await fs.exec("/bin/cat", ["/opt/proboy/VERSION"]); if (v && v.stdout) R.ver = v.stdout.trim(); } catch(e) {}
     try { var ip = await fs.exec("/bin/ip",["-4","addr","show","br-lan"]); if (ip && ip.stdout) { var x = ip.stdout.match(/inet\s+([\d.]+)/); if (x) R.ip = x[1]; } } catch(e) {}
     try { var rt = await fs.exec("/bin/ip",["route","show","default"]); if (rt && rt.stdout) { var x = rt.stdout.match(/via\s+([\d.]+)/); if (x) R.gw = x[1]; } } catch(e) {}
     try { var rs = await fs.read("/tmp/resolv.conf") || await fs.read("/tmp/resolv.conf.d/resolv.conf.auto"); if (rs) { var s=[]; rs.split("\n").forEach(function(l){var m=l.match(/nameserver\s+([\d.]+)/);if(m)s.push(m[1]);}); R.dns=s.join(", "); } } catch(e) {}
