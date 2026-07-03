@@ -22,54 +22,58 @@
             <ul class="nav-menu">
                 <li class="nav-item active" data-page="dashboard">
                     <span class="nav-icon">📊</span>
-                    <span class="nav-label">Dashboard</span>
+                    <span class="nav-label" data-i18n="dashboard">Панель</span>
                 </li>
                 <li class="nav-item" data-page="combo">
                     <span class="nav-icon">⚡</span>
-                    <span class="nav-label">Combo Builder</span>
+                    <span class="nav-label" data-i18n="combo">Комбо</span>
                 </li>
                 <li class="nav-item" data-page="proxy">
                     <span class="nav-icon">🔗</span>
-                    <span class="nav-label">Proxy</span>
+                    <span class="nav-label" data-i18n="proxy">Прокси</span>
                 </li>
                 <li class="nav-item" data-page="zapret">
                     <span class="nav-icon">🛡️</span>
-                    <span class="nav-label">Zapret</span>
+                    <span class="nav-label" data-i18n="zapret">Zapret</span>
                 </li>
                 <li class="nav-item" data-page="games">
                     <span class="nav-icon">🎮</span>
-                    <span class="nav-label">Games</span>
+                    <span class="nav-label" data-i18n="games">Игры</span>
                 </li>
                 <li class="nav-item" data-page="network">
                     <span class="nav-icon">🔍</span>
-                    <span class="nav-label">Network</span>
+                    <span class="nav-label" data-i18n="network">Сеть</span>
                 </li>
                 <li class="nav-item" data-page="subscriptions">
                     <span class="nav-icon">📡</span>
-                    <span class="nav-label">Subscriptions</span>
+                    <span class="nav-label" data-i18n="subscriptions">Подписки</span>
                 </li>
                 <li class="nav-item" data-page="authors">
                     <span class="nav-icon">👥</span>
-                    <span class="nav-label">Authors</span>
+                    <span class="nav-label" data-i18n="authors">Авторы</span>
                 </li>
                 <li class="nav-item" data-page="update">
                     <span class="nav-icon">🔄</span>
-                    <span class="nav-label">Update</span>
+                    <span class="nav-label" data-i18n="update">Обновление</span>
                 </li>
                 <li class="nav-item" data-page="settings">
                     <span class="nav-icon">⚙️</span>
-                    <span class="nav-label">Settings</span>
+                    <span class="nav-label" data-i18n="settings">Настройки</span>
                 </li>
             </ul>
 
             <div class="sidebar-footer">
+                <div class="lang-switcher">
+                    <button class="lang-btn" onclick="setLang('ru')" id="langRu">RU</button>
+                    <button class="lang-btn" onclick="setLang('en')" id="langEn">EN</button>
+                </div>
                 <div class="version-info">
                     <span class="version-tag">v1.0.0 Phoenix</span>
-                    <span class="alpha-tag">ALPHA</span>
+                    <span class="alpha-tag" data-i18n="alpha">АЛЬФА</span>
                 </div>
                 <div class="status-indicator">
                     <span class="status-dot" id="statusDot"></span>
-                    <span class="status-text" id="statusText">Checking...</span>
+                    <span class="status-text" id="statusText" data-i18n="checking">Проверка...</span>
                 </div>
             </div>
         </nav>
@@ -78,69 +82,69 @@
         <main class="main-content">
             <div class="page" id="page-dashboard">
                 <div class="page-header">
-                    <h1>Dashboard</h1>
-                    <p>Proboy x FreeLink — Internet Freedom for People</p>
+                    <h1 data-i18n="dashboard_title">Панель управления</h1>
+                    <p data-i18n="dashboard_desc">Proboy x FreeLink — Свобода интернета для людей</p>
                 </div>
                 <div class="cards-grid">
                     <div class="card">
                         <div class="card-icon" style="background: #00d2ff33;">🛡️</div>
                         <div class="card-content">
                             <h3>Zapret</h3>
-                            <p class="status status-ok" id="zapretStatus">Running</p>
+                            <p class="status status-ok" id="zapretStatus" data-i18n="running">Работает</p>
                         </div>
                     </div>
                     <div class="card">
                         <div class="card-icon" style="background: #7c3aed33;">🔗</div>
                         <div class="card-content">
                             <h3>sing-box</h3>
-                            <p class="status" id="singboxStatus">Stopped</p>
+                            <p class="status" id="singboxStatus" data-i18n="stopped">Остановлен</p>
                         </div>
                     </div>
                     <div class="card">
                         <div class="card-icon" style="background: #10b98133;">🎮</div>
                         <div class="card-content">
-                            <h3>Game Filter</h3>
-                            <p class="status status-ok" id="gameStatus">Enabled</p>
+                            <h3 data-i18n="games_title">Игровой фильтр</h3>
+                            <p class="status status-ok" id="gameStatus" data-i18n="enabled">Включён</p>
                         </div>
                     </div>
                     <div class="card">
                         <div class="card-icon" style="background: #f59e0b33;">📡</div>
                         <div class="card-content">
-                            <h3>Subscription</h3>
-                            <p class="status" id="subStatus">Not configured</p>
+                            <h3 data-i18n="subscriptions">Подписки</h3>
+                            <p class="status" id="subStatus" data-i18n="not_configured">Не настроен</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="card mt-4">
                     <div class="card-header">
-                        <h2>System Info</h2>
+                        <h2 data-i18n="system_info">Информация о системе</h2>
                     </div>
                     <div class="card-body" id="systemInfo">
                         <div class="info-grid">
                             <div class="info-item">
-                                <span class="info-label">OS</span>
-                                <span class="info-value" id="infoOS">Detecting...</span>
+                                <span class="info-label" data-i18n="os">ОС</span>
+                                <span class="info-value" id="infoOS">...</span>
                             </div>
                             <div class="info-item">
-                                <span class="info-label">Router</span>
-                                <span class="info-value" id="infoRouter">Detecting...</span>
+                                <span class="info-label" data-i18n="router">Роутер</span>
+                                <span class="info-value" id="infoRouter">...</span>
                             </div>
                             <div class="info-item">
-                                <span class="info-label">CPU</span>
-                                <span class="info-value" id="infoCPU">Detecting...</span>
+                                <span class="info-label" data-i18n="cpu">Процессор</span>
+                                <span class="info-value" id="infoCPU">...</span>
                             </div>
                             <div class="info-item">
-                                <span class="info-label">RAM</span>
-                                <span class="info-value" id="infoRAM">Detecting...</span>
+                                <span class="info-label" data-i18n="ram">ОЗУ</span>
+                                <span class="info-value" id="infoRAM">...</span>
                             </div>
                             <div class="info-item">
-                                <span class="info-label">Flash</span>
-                                <span class="info-value" id="infoFlash">Detecting...</span>
+                                <span class="info-label" data-i18n="flash">Флеш</span>
+                                <span class="info-value" id="infoFlash">...</span>
                             </div>
                             <div class="info-item">
-                                <span class="info-label">Architecture</span>
-                                <span class="info-value" id="infoArch">Detecting...</span>
+                                <span class="info-label" data-i18n="arch">Архитектура</span>
+                                <span class="info-value" id="infoArch">...</span>
                             </div>
                         </div>
                     </div>
@@ -160,8 +164,17 @@
         </main>
     </div>
 
+    <script src="js/i18n.js"></script>
     <script src="js/app.js"></script>
     <script src="js/api.js"></script>
-    <script src="js/i18n.js"></script>
+    <script>
+        // Apply translations on load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Highlight current language button
+            const lang = localStorage.getItem('proboy-lang') || 'ru';
+            document.getElementById('lang' + lang.toUpperCase())?.classList.add('active');
+            updateAllTranslations();
+        });
+    </script>
 </body>
 </html>
