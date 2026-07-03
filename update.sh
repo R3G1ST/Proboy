@@ -118,9 +118,9 @@ stop_services() {
     fi
 
     # Kill running processes
-    pkill -f "proboy.sh" 2>/dev/null || true
-    pkill -f "nfqws" 2>/dev/null || true
-    pkill -f "sing-box" 2>/dev/null || true
+    for pid in $(ps | grep "[p]roboy.sh\|[n]fqws\|[s]ing-box" | awk '{print $1}'); do
+        kill "${pid}" 2>/dev/null || true
+    done
 
     sleep 1
     ok "Services stopped"
@@ -129,7 +129,7 @@ stop_services() {
 # Update project files (scripts, web, modules, strategies, lists, etc.)
 update_files() {
     step "Updating project files..."
-    TOTAL=64
+    TOTAL=65
     CNT=0
     FAIL=0
 

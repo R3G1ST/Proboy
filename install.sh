@@ -217,7 +217,7 @@ install_binaries() {
 
 install_files() {
     step "Downloading project files..."
-    TOTAL=64
+    TOTAL=65
     CNT=0
     FAIL=0
 

@@ -34,15 +34,21 @@ fi
 
 # Stop sing-box
 echo "[>>] Stopping sing-box..."
-if [ -f /opt/proboy/bin/sing-box ]; then
-    pkill -f "sing-box" 2>/dev/null || true
-fi
+for pid in $(ps | grep "[s]ing-box" | awk '{print $1}'); do
+    kill "${pid}" 2>/dev/null || true
+done
 
 # Stop zapret
 echo "[>>] Stopping zapret..."
-if [ -f /opt/proboy/bin/nfqws ]; then
-    pkill -f "nfqws" 2>/dev/null || true
-fi
+for pid in $(ps | grep "[n]fqws" | awk '{print $1}'); do
+    kill "${pid}" 2>/dev/null || true
+done
+
+# Stop web server
+echo "[>>] Stopping web server..."
+for pid in $(ps | grep "[u]httpd.*proboy\|[h]ttpd.*8080" | awk '{print $1}'); do
+    kill "${pid}" 2>/dev/null || true
+done
 
 # Ask about sing-box removal
 echo ""
