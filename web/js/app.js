@@ -1,21 +1,85 @@
 /* Proboy x FreeLink — Main App */
 
-document.addEventListener('DOMContentLoaded', () => {
+const COMBO_PRESETS = {
+    gamer: {
+        name: { ru: 'Геймер', en: 'Gamer' },
+        desc: { ru: 'Оптимизация для игр', en: 'Optimized for gaming' },
+        icon: '🎮',
+        settings: { zapret_enabled: 1, zapret_strategy: 'gaming', gamefilter_enabled: 1, gamefilter_mode: 'universal', dns_enabled: 1, dns_provider: 'cloudflare', youtube_enabled: 0, ipv6_enabled: 0, failover_enabled: 1 }
+    },
+    max: {
+        name: { ru: 'Максимум', en: 'Maximum' },
+        desc: { ru: 'Максимальный обход блокировок', en: 'Maximum bypass' },
+        icon: '🚀',
+        settings: { zapret_enabled: 1, zapret_strategy: 'aggressive', gamefilter_enabled: 1, gamefilter_mode: 'universal', dns_enabled: 1, dns_provider: 'cloudflare', youtube_enabled: 1, ipv6_enabled: 1, failover_enabled: 1 }
+    },
+    min: {
+        name: { ru: 'Минимум', en: 'Minimum' },
+        desc: { ru: 'Минимальное потребление ресурсов', en: 'Minimal resource usage' },
+        icon: '🔋',
+        settings: { zapret_enabled: 1, zapret_strategy: 'general', gamefilter_enabled: 0, gamefilter_mode: 'universal', dns_enabled: 1, dns_provider: 'cloudflare', youtube_enabled: 0, ipv6_enabled: 0, failover_enabled: 0 }
+    },
+    stream: {
+        name: { ru: 'Стриминг', en: 'Streaming' },
+        desc: { ru: 'Оптимизация для YouTube/Straming', en: 'Optimized for YouTube/Streaming' },
+        icon: '📺',
+        settings: { zapret_enabled: 1, zapret_strategy: 'youtube', gamefilter_enabled: 0, gamefilter_mode: 'universal', dns_enabled: 1, dns_provider: 'cloudflare', youtube_enabled: 1, ipv6_enabled: 0, failover_enabled: 1 }
+    },
+    free: {
+        name: { ru: 'Свобода', en: 'Freedom' },
+        desc: { ru: 'Полная свобода интернета', en: 'Full internet freedom' },
+        icon: '🏴',
+        settings: { zapret_enabled: 1, zapret_strategy: 'aggressive', gamefilter_enabled: 1, gamefilter_mode: 'universal', dns_enabled: 1, dns_provider: 'cloudflare', youtube_enabled: 1, ipv6_enabled: 1, failover_enabled: 1 }
+    }
+};
+
+function getPresetIcon(key) {
+    return COMBO_PRESETS[key]?.icon || '⚡';
+}
+
+function getPresetName(key) {
+    var p = COMBO_PRESETS[key];
+    return p ? (p.name[currentLang] || p.name.en) : key;
+}
+
+function getPresetDesc(key) {
+    var p = COMBO_PRESETS[key];
+    return p ? (p.desc[currentLang] || p.desc.en) : '';
+}
+
+async function applyPreset(key) {
+    var preset = COMBO_PRESETS[key];
+    if (!preset) return;
+    var name = getPresetName(key);
+    if (!confirm(name + '?')) return;
+    try {
+        var resp = await fetch('/cgi-bin/proboy-api/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(preset.settings)
+        });
+        var data = await resp.json();
+        alert(data.ok ? (name + ' OK') : ('Error: ' + (data.message || 'Unknown')));
+    } catch (e) {
+        alert('Error: ' + e.message);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
     initNavigation();
     loadSystemInfo();
     checkStatus();
 });
 
 function initNavigation() {
-    const navItems = document.querySelectorAll('.nav-item');
-    navItems.forEach(item => {
-        item.addEventListener('click', () => {
-            navItems.forEach(i => i.classList.remove('active'));
+    var navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(function(item) {
+        item.addEventListener('click', function() {
+            navItems.forEach(function(i) { i.classList.remove('active'); });
             item.classList.add('active');
-
-            const page = item.dataset.page;
-            document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
-            const pageEl = document.getElementById('page-' + page);
+            var page = item.dataset.page;
+            document.querySelectorAll('.page').forEach(function(p) { p.style.display = 'none'; });
+            var pageEl = document.getElementById('page-' + page);
             if (pageEl) {
                 pageEl.style.display = 'block';
                 loadPage(page);
@@ -25,36 +89,73 @@ function initNavigation() {
 }
 
 async function loadPage(page) {
-    const pageEl = document.getElementById('page-' + page);
+    var pageEl = document.getElementById('page-' + page);
     if (!pageEl) return;
 
-    if (page === 'authors') {
-        pageEl.innerHTML = await loadAuthorsPage();
-    } else if (page === 'combo') {
-        pageEl.innerHTML = await loadComboPage();
+    if (page === 'combo') {
+        pageEl.innerHTML = buildComboHTML();
+    } else if (page === 'authors') {
+        pageEl.innerHTML = buildAuthorsHTML();
     } else if (page === 'settings') {
-        pageEl.innerHTML = await loadSettingsPage();
+        pageEl.innerHTML = buildSettingsHTML();
     } else if (page === 'zapret') {
-        pageEl.innerHTML = await loadZapretPage();
+        pageEl.innerHTML = buildZapretHTML();
     } else if (page === 'games') {
-        pageEl.innerHTML = await loadGamesPage();
+        pageEl.innerHTML = buildGamesHTML();
     } else if (page === 'network') {
-        pageEl.innerHTML = await loadNetworkPage();
+        pageEl.innerHTML = buildNetworkHTML();
     } else if (page === 'subscriptions') {
-        pageEl.innerHTML = await loadSubscriptionsPage();
+        pageEl.innerHTML = buildSubsHTML();
     }
+}
+
+function buildComboHTML() {
+    var h = '<div class="page-header"><h1>' + t('combo_title') + '</h1><p>' + t('combo_desc') + '</p></div><div class="combo-grid">';
+    for (var key in COMBO_PRESETS) {
+        h += '<div class="combo-card" onclick="applyPreset(\'' + key + '\')">';
+        h += '<div class="combo-icon">' + getPresetIcon(key) + '</div>';
+        h += '<h3>' + getPresetName(key) + '</h3>';
+        h += '<p>' + getPresetDesc(key) + '</p>';
+        h += '<button class="btn btn-accent">' + t('apply') + '</button>';
+        h += '</div>';
+    }
+    h += '</div>';
+    return h;
+}
+
+function buildAuthorsHTML() {
+    return '<div class="page-header"><h1>Authors</h1></div><div class="card"><div class="card-body"><p>R3G1ST — FreeLink + Proboy</p><p>bol-van — zapret</p><p>Flowseal — zapret-discord-youtube</p><p>apernet — Hysteria2</p><p>SagerNet — sing-box</p></div></div>';
+}
+
+function buildSettingsHTML() {
+    return '<div class="page-header"><h1>' + t('settings_title') + '</h1></div><div class="card"><div class="card-body"><p>' + t('settings') + '</p></div></div>';
+}
+
+function buildZapretHTML() {
+    return '<div class="page-header"><h1>Zapret</h1></div><div class="card"><div class="card-body"><p>DPI Bypass — 50+ strategies</p></div></div>';
+}
+
+function buildGamesHTML() {
+    return '<div class="page-header"><h1>' + t('games_title') + '</h1></div><div class="card"><div class="card-body"><p>Universal game mode</p></div></div>';
+}
+
+function buildNetworkHTML() {
+    return '<div class="page-header"><h1>' + t('network_title') + '</h1></div><div class="card"><div class="card-body"><p>Network analyzer</p></div></div>';
+}
+
+function buildSubsHTML() {
+    return '<div class="page-header"><h1>' + t('sub_title') + '</h1></div><div class="card"><div class="card-body"><p>Subscriptions</p></div></div>';
 }
 
 async function loadSystemInfo() {
     try {
-        const resp = await fetch('/cgi-bin/proboy-api/system');
-        const data = await resp.json();
-
-        document.getElementById('infoOS').textContent = `${data.os} ${data.os_version}`;
-        document.getElementById('infoRouter').textContent = `${data.router_brand} ${data.router_model}`.trim() || 'Unknown';
-        document.getElementById('infoCPU').textContent = `${data.cpu} (${data.cpu_cores} cores)`;
-        document.getElementById('infoRAM').textContent = `${data.ram_mb} MB`;
-        document.getElementById('infoFlash').textContent = `${data.flash_free_mb} MB free`;
+        var resp = await fetch('/cgi-bin/proboy-api/system');
+        var data = await resp.json();
+        document.getElementById('infoOS').textContent = data.os + ' ' + data.os_version;
+        document.getElementById('infoRouter').textContent = (data.router_brand + ' ' + data.router_model).trim() || 'Unknown';
+        document.getElementById('infoCPU').textContent = data.cpu + ' (' + data.cpu_cores + ' cores)';
+        document.getElementById('infoRAM').textContent = data.ram_mb + ' MB';
+        document.getElementById('infoFlash').textContent = data.flash_free_mb + ' MB free';
         document.getElementById('infoArch').textContent = data.os_arch;
     } catch (e) {
         document.getElementById('infoOS').textContent = 'Unavailable';
@@ -63,308 +164,21 @@ async function loadSystemInfo() {
 
 async function checkStatus() {
     try {
-        const resp = await fetch('/cgi-bin/proboy-api/status');
-        const data = await resp.json();
-        const dot = document.getElementById('statusDot');
-        const text = document.getElementById('statusText');
-
+        var resp = await fetch('/cgi-bin/proboy-api/status');
+        var data = await resp.json();
+        var dot = document.getElementById('statusDot');
+        var text = document.getElementById('statusText');
         if (data.running) {
             dot.classList.add('ok');
-            text.textContent = 'Running';
+            text.textContent = t('running');
         } else {
             dot.classList.add('error');
-            text.textContent = 'Stopped';
+            text.textContent = t('stopped');
         }
     } catch (e) {
-        const dot = document.getElementById('statusDot');
-        const text = document.getElementById('statusText');
-        dot.classList.add('error');
-        text.textContent = 'Offline';
+        document.getElementById('statusDot').classList.add('error');
+        document.getElementById('statusText').textContent = 'Offline';
     }
-}
-
-async function loadAuthorsPage() {
-    return `
-    <div class="page-header">
-        <h1>Authors & Credits</h1>
-        <p>Proboy x FreeLink — Internet Freedom for People</p>
-    </div>
-
-    <div class="card mb-4">
-        <div class="card-header"><h2>Project Authors</h2></div>
-        <div class="card-body">
-            <table class="table">
-                <tr>
-                    <td><strong>R3G1ST</strong></td>
-                    <td>FreeLink + Proboy (author)</td>
-                    <td><a href="https://github.com/R3G1ST" target="_blank">github.com/R3G1ST</a></td>
-                </tr>
-            </table>
-        </div>
-    </div>
-
-    <div class="card mb-4">
-        <div class="card-header"><h2>Core Dependencies</h2></div>
-        <div class="card-body">
-            <table class="table">
-                <thead>
-                    <tr><th>Author</th><th>Project</th><th>Stars</th><th>What We Use</th></tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><strong>bol-van</strong></td>
-                        <td><a href="https://github.com/bol-van/zapret" target="_blank">zapret</a></td>
-                        <td>15.6k</td>
-                        <td>DPI bypass engine (nfqws/tpws)</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Flowseal</strong></td>
-                        <td><a href="https://github.com/Flowseal/zapret-discord-youtube" target="_blank">zapret-discord-youtube</a></td>
-                        <td>30.4k</td>
-                        <td>Tested DPI strategies</td>
-                    </tr>
-                    <tr>
-                        <td><strong>apernet</strong></td>
-                        <td><a href="https://github.com/apernet/hysteria" target="_blank">Hysteria 2</a></td>
-                        <td>22k</td>
-                        <td>QUIC-based anti-censorship proxy</td>
-                    </tr>
-                    <tr>
-                        <td><strong>SagerNet</strong></td>
-                        <td><a href="https://github.com/SagerNet/sing-box" target="_blank">sing-box</a></td>
-                        <td>16k</td>
-                        <td>Universal proxy platform</td>
-                    </tr>
-                    <tr>
-                        <td><strong>itdoginfo</strong></td>
-                        <td><a href="https://github.com/itdoginfo/podkop" target="_blank">podkop</a></td>
-                        <td>2k</td>
-                        <td>Architecture inspiration</td>
-                    </tr>
-                    <tr>
-                        <td><strong>OpenWrt</strong></td>
-                        <td><a href="https://github.com/openwrt/openwrt" target="_blank">OpenWrt</a></td>
-                        <td>-</td>
-                        <td>Router OS (APK package manager)</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <div class="card mb-4">
-        <div class="card-header"><h2>Strategy Authors</h2></div>
-        <div class="card-body">
-            <table class="table">
-                <tr>
-                    <td><strong>bol-van</strong></td>
-                    <td>Original zapret strategies (fake, multisplit, disorder, syndata, etc.)</td>
-                </tr>
-                <tr>
-                    <td><strong>Flowseal</strong></td>
-                    <td>Community-tested strategies (ALT 1-12, FAKE TLS AUTO, SIMPLE FAKE)</td>
-                </tr>
-                <tr>
-                    <td><strong>Proboy community</strong></td>
-                    <td>Gaming strategies (Fortnite, CS2, Discord, PSN, etc.)</td>
-                </tr>
-            </table>
-        </div>
-    </div>
-
-    <div class="card mb-4">
-        <div class="card-header"><h2>Acknowledgments</h2></div>
-        <div class="card-body" style="padding: 16px;">
-            <ul style="list-style: none; line-height: 2;">
-                <li><strong>bol-van</strong> — for creating zapret, the foundation of DPI bypass on OpenWrt</li>
-                <li><strong>Flowseal</strong> — for testing and documenting strategies that work against Russian DPI</li>
-                <li><strong>itdoginfo</strong> — for podkop, which inspired Proboy's architecture</li>
-                <li><strong>apernet</strong> — for Hysteria2, the fastest QUIC-based proxy</li>
-                <li><strong>SagerNet</strong> — for sing-box, the universal proxy platform</li>
-                <li><strong>OpenWrt community</strong> — for the router OS that makes this possible</li>
-                <li><strong>All contributors</strong> — who test strategies, report issues, and improve the project</li>
-            </ul>
-        </div>
-    </div>
-
-    <div class="card">
-        <div class="card-body" style="padding: 16px;">
-            <p style="text-align: center; color: var(--text-dim);">
-                License: MIT &nbsp;|&nbsp;
-                <a href="https://github.com/R3G1ST/Proboy" target="_blank">github.com/R3G1ST/Proboy</a> &nbsp;|&nbsp;
-                <a href="https://github.com/R3G1ST/FreeLink" target="_blank">github.com/R3G1ST/FreeLink</a>
-            </p>
-        </div>
-    </div>`;
-}
-
-async function loadComboPage() {
-    let html = `
-        <div class="page-header">
-            <h1 data-i18n="combo_title">${t('combo_title')}</h1>
-            <p data-i18n="combo_desc">${t('combo_desc')}</p>
-        </div>
-        <div class="combo-grid">
-    `;
-
-    for (const [key, preset] of Object.entries(COMBO_PRESETS)) {
-        const name = preset.name[currentLang] || preset.name.en;
-        const desc = preset.desc[currentLang] || preset.desc.en;
-        html += `
-            <div class="combo-card" onclick="applyPreset('${key}')">
-                <div class="combo-icon">${getPresetIcon(key)}</div>
-                <h3>${name}</h3>
-                <p>${desc}</p>
-                <button class="btn btn-accent">${t('apply')}</button>
-            </div>
-        `;
-    }
-
-    html += '</div>';
-    return html;
-}
-
-async function loadSettingsPage() {
-    return `
-    <div class="page-header">
-        <h1>Settings</h1>
-        <p>Proboy configuration</p>
-    </div>
-    <div class="card">
-        <div class="card-body" style="padding: 16px;">
-            <div class="form-group">
-                <label>Zapret Strategy</label>
-                <select class="form-input" id="zapretStrategy">
-                    <option value="auto">Auto (recommended)</option>
-                    <option value="general">General</option>
-                    <option value="fake-tls-auto">FAKE TLS AUTO</option>
-                    <option value="discord">Discord</option>
-                    <option value="youtube">YouTube</option>
-                    <option value="gaming">Gaming</option>
-                    <option value="fortnite">Fortnite</option>
-                    <option value="cs2">CS2</option>
-                    <option value="psn">PlayStation Network</option>
-                    <option value="telegram">Telegram</option>
-                    <option value="aggressive">Aggressive</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Web Panel Port</label>
-                <input type="number" class="form-input" id="webPort" value="8080">
-            </div>
-            <div class="form-group">
-                <label>DNS Provider</label>
-                <select class="form-input" id="dnsProvider">
-                    <option value="cloudflare">Cloudflare (1.1.1.1)</option>
-                    <option value="google">Google (8.8.8.8)</option>
-                    <option value="quad9">Quad9 (9.9.9.9)</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Subscription URL</label>
-                <input type="text" class="form-input" id="subUrl" placeholder="https://...">
-            </div>
-            <div class="form-group">
-                <label>Auto-refresh subscription (hours)</label>
-                <input type="number" class="form-input" id="subRefresh" value="24">
-            </div>
-            <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
-        </div>
-    </div>`;
-}
-
-async function loadZapretPage() {
-    return `
-    <div class="page-header">
-        <h1>Zapret (DPI Bypass)</h1>
-        <p>50+ strategies from bol-van and Flowseal</p>
-    </div>
-    <div class="card">
-        <div class="card-body" style="padding: 16px;">
-            <div class="form-group">
-                <label>Active Strategy</label>
-                <select class="form-input">
-                    <option>auto</option>
-                    <option>general</option>
-                    <option>general-alt</option>
-                    <option>fake-tls-auto</option>
-                    <option>fake-tls-auto-alt</option>
-                    <option>discord</option>
-                    <option>youtube</option>
-                    <option>gaming</option>
-                    <option>fortnite</option>
-                    <option>cs2</option>
-                    <option>psn</option>
-                    <option>telegram</option>
-                    <option>aggressive</option>
-                </select>
-            </div>
-            <button class="btn btn-primary">Apply Strategy</button>
-            <button class="btn btn-secondary">Test Strategy</button>
-        </div>
-    </div>`;
-}
-
-async function loadGamesPage() {
-    return `
-    <div class="page-header">
-        <h1>Games</h1>
-        <p>Universal game mode for all platforms</p>
-    </div>
-    <div class="cards-grid">
-        <div class="card"><div class="card-content"><h3>🎮 Universal Game Mode</h3><p class="status status-ok">All games supported</p></div></div>
-        <div class="card"><div class="card-content"><h3>🕹️ PS5</h3><p class="status">Auto-detect</p></div></div>
-        <div class="card"><div class="card-content"><h3>🔫 CS2</h3><p class="status status-ok">Enabled</p></div></div>
-        <div class="card"><div class="card-content"><h3>🏰 Fortnite</h3><p class="status status-ok">Enabled</p></div></div>
-    </div>`;
-}
-
-async function loadNetworkPage() {
-    return `
-    <div class="page-header">
-        <h1>Network Analyzer</h1>
-        <p>Detect DPI type and auto-configure</p>
-    </div>
-    <div class="card">
-        <div class="card-body" style="padding: 16px;">
-            <button class="btn btn-primary">🔍 Run Analysis</button>
-            <div id="networkResults" style="margin-top: 16px;">
-                <p style="color: var(--text-dim);">Click to analyze your network...</p>
-            </div>
-        </div>
-    </div>`;
-}
-
-async function loadSubscriptionsPage() {
-    return `
-    <div class="page-header">
-        <h1>Subscriptions</h1>
-        <p>Import from FreeLink or third-party sources</p>
-    </div>
-    <div class="card">
-        <div class="card-body" style="padding: 16px;">
-            <div class="form-group">
-                <label>Subscription URL</label>
-                <input type="text" class="form-input" placeholder="hysteria2://... or clash://... or vless://...">
-            </div>
-            <div class="form-group">
-                <label>Or paste from clipboard</label>
-                <textarea class="form-input" rows="4" placeholder="Paste subscription link or config here..."></textarea>
-            </div>
-            <button class="btn btn-primary">📡 Import Subscription</button>
-            <button class="btn btn-secondary">🔄 Refresh All</button>
-            <h3 style="margin-top: 24px; margin-bottom: 12px;">Supported Formats</h3>
-            <p style="color: var(--text-dim); font-size: 13px;">
-                FreeLink native (hysteria2://, vless://, trojan://, ss://) &nbsp;|&nbsp;
-                Clash (YAML) &nbsp;|&nbsp;
-                v2rayN (base64) &nbsp;|&nbsp;
-                Happ &nbsp;|&nbsp;
-                Sing-box &nbsp;|&nbsp;
-                WireGuard &nbsp;|&nbsp;
-                Manual URI
-            </p>
-        </div>
-    </div>`;
 }
 
 function saveSettings() {
