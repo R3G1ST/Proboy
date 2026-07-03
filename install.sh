@@ -478,34 +478,35 @@ set_permissions() {
 install_luci() {
     step "Installing LuCI integration..."
 
-    if [ ! -d /www/luci-static/resources ] && [ ! -d /usr/lib/lua/luci ]; then
-        warn "LuCI not found, skipping integration"
+    # Remove old Lua controller (won't work on OpenWrt 24.10+)
+    rm -rf /usr/lib/lua/luci/controller/proboy.lua 2>/dev/null || true
+    rm -rf /usr/lib/lua/luci/view/proboy/ 2>/dev/null || true
+
+    # Remove old broken files
+    rm -f /usr/share/luci/menu.d/proboy.json 2>/dev/null || true
+    rm -f /usr/share/rpcd/acl.d/proboy.json 2>/dev/null || true
+
+    # Install JSON menu entry for ucode LuCI
+    mkdir -p /usr/share/luci/menu.d
+    dl "${REPO}/luci/root/usr/share/luci/menu.d/proboy.json" /usr/share/luci/menu.d/proboy.json 2>/dev/null || true
+
+    # Verify JSON was downloaded
+    if [ -f /usr/share/luci/menu.d/proboy.json ]; then
+        chmod 644 /usr/share/luci/menu.d/proboy.json
+        ok "LuCI menu installed"
+    else
+        warn "Failed to install LuCI menu"
         return
     fi
 
-    # Remove old JSON files
-    rm -f /usr/share/luci/menu.d/proboy.json
-    rm -f /usr/share/rpcd/acl.d/proboy.json
-
-    # Lua controller
-    mkdir -p /usr/lib/lua/luci/controller
-    dl "${REPO}/luci/controller/proboy.lua" /usr/lib/lua/luci/controller/proboy.lua 2>/dev/null || true
-
-    # HTM templates
-    mkdir -p /usr/lib/lua/luci/view/proboy
-    for f in status zapret games network subs settings; do
-        dl "${REPO}/luci/view/proboy/${f}.htm" "/usr/lib/lua/luci/view/proboy/${f}.htm" 2>/dev/null || true
-    done
-
-    # Fix permissions
-    chmod 644 /usr/lib/lua/luci/controller/proboy.lua 2>/dev/null || true
-    chmod 644 /usr/lib/lua/luci/view/proboy/*.htm 2>/dev/null || true
-
     # Clear LuCI cache
-    rm -f /tmp/luci-indexcache
-    rm -rf /tmp/luci-compilecache
+    rm -f /tmp/luci-indexcache 2>/dev/null || true
+    rm -rf /tmp/luci-compilecache 2>/dev/null || true
 
-    ok "LuCI integration installed"
+    # Restart uhttpd to reload LuCI
+    /etc/init.d/uhttpd restart 2>/dev/null || true
+
+    ok "LuCI integration ready"
 }
 
 select_language() {
