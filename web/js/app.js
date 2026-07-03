@@ -199,16 +199,8 @@ async function loadAuthorsPage() {
 }
 
 async function loadComboPage() {
-    return `
-    <div class="page-header">
-        <h1>Combo Builder</h1>
-        <p>Choose a preset or customize your setup</p>
-    </div>
-    <div class="cards-grid" id="comboPresets">
-        <div class="card" style="text-align:center; padding: 32px;">
-            <p style="color: var(--text-dim);">Loading presets...</p>
-        </div>
-    </div>`;
+    renderComboPage();
+    return '';
 }
 
 async function loadSettingsPage() {
