@@ -244,7 +244,7 @@ install_binaries() {
 
 install_files() {
     step "Downloading project files..."
-    TOTAL=65
+    TOTAL=66
     CNT=0
     FAIL=0
 
@@ -273,7 +273,7 @@ install_files() {
         game-servers/microsoft.json game-servers/nintendo.json \
         nftables/nftables-game.nft nftables/ps5-nftables.nft nftables/dns-bypass.nft \
         nftables/youtube-nftables.nft nftables/ipv6-nftables.nft \
-        presets.json uninstall.sh
+        presets.json uninstall.sh VERSION
     do
         CNT=$((CNT+1))
         PCT=$((CNT * 100 / TOTAL))
