@@ -99,15 +99,6 @@ return view.extend({
         o.readonly = true;
         o.cfgvalue = function() { return info.uptime || "?"; };
 
-        o = s.taboption("dashboard", form.Value, "_ctrl", "\u0423\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u0435");
-        o.readonly = true;
-        o.cfgvalue = function() {
-            return '<div style="margin-bottom:8px"><input type="button" class="cbi-button cbi-button-apply" value="\u0417\u0430\u043F\u0443\u0441\u0442\u0438\u0442\u044C" onclick="doProboyAction(\'start\')" /> '
-                + '<input type="button" class="cbi-button cbi-button-reset" value="\u041E\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u0442\u044C" onclick="doProboyAction(\'stop\')" /> '
-                + '<input type="button" class="cbi-button cbi-button-apply" value="\u041F\u0435\u0440\u0435\u0437\u0430\u043F\u0443\u0441\u0442\u0438\u0442\u044C" onclick="doProboyAction(\'restart\')" />'
-                + '</div><div id="proboy-action-result" style="display:none;padding:8px;border-radius:4px;background:#e8f5e9"></div>';
-        };
-
         /* ═══ Zapret ═══ */
         s.tab("zapret", "Zapret");
 
@@ -182,12 +173,31 @@ return view.extend({
         o.value("en", "English");
         o.default = "ru";
 
-        o = s.taboption("settings", form.Flag, "web_enabled", "\u0412\u0435\u0431-\u043F\u0430\u043D\u0435\u043B\u044C");
+        o = s.taboption("settings", form.Flag, "web_enabled", "\u0412\u0431\u0435-\u043F\u0430\u043D\u0435\u043B\u044C");
         o.default = "1"; o.rmempty = false;
 
         o = s.taboption("settings", form.Value, "web_port", "\u041F\u043E\u0440\u0442");
         o.datatype = "port"; o.default = "8080";
 
-        return m.render();
+        /* ═══ Inject buttons after render ═══ */
+        return m.render().then(function(mapEl) {
+            var dashboardTab = mapEl.querySelector('[data-tab="dashboard"]');
+            if (!dashboardTab) return mapEl;
+
+            var btns = E('div', { 'class': 'cbi-value', 'style': 'margin-top:16px' }, [
+                E('div', { 'class': 'cbi-value-title' }, [\u0423\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u0435]),
+                E('div', { 'class': 'cbi-value-field' }, [
+                    E('input', { 'type': 'button', 'class': 'cbi-button cbi-button-apply', 'value': '\u0417\u0430\u043F\u0443\u0441\u0442\u0438\u0442\u044C', 'click': function() { doProboyAction('start'); } }),
+                    E('span', {}, ' '),
+                    E('input', { 'type': 'button', 'class': 'cbi-button cbi-button-reset', 'value': '\u041E\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u0442\u044C', 'click': function() { doProboyAction('stop'); } }),
+                    E('span', {}, ' '),
+                    E('input', { 'type': 'button', 'class': 'cbi-button cbi-button-apply', 'value': '\u041F\u0435\u0440\u0435\u0437\u0430\u043F\u0443\u0441\u0442\u0438\u0442\u044C', 'click': function() { doProboyAction('restart'); } }),
+                    E('div', { 'id': 'proboy-action-result', 'style': 'display:none;padding:8px;border-radius:4px;background:#e8f5e9;margin-top:8px' })
+                ])
+            ]);
+
+            dashboardTab.appendChild(btns);
+            return mapEl;
+        });
     }
 });
