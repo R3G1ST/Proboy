@@ -1,186 +1,116 @@
 /* Proboy x FreeLink — Main App */
 
-const COMBO_PRESETS = {
-    gamer: {
-        name: { ru: 'Геймер', en: 'Gamer' },
-        desc: { ru: 'Оптимизация для игр', en: 'Optimized for gaming' },
-        icon: '🎮',
-        settings: { zapret_enabled: 1, zapret_strategy: 'gaming', gamefilter_enabled: 1, gamefilter_mode: 'universal', dns_enabled: 1, dns_provider: 'cloudflare', youtube_enabled: 0, ipv6_enabled: 0, failover_enabled: 1 }
-    },
-    max: {
-        name: { ru: 'Максимум', en: 'Maximum' },
-        desc: { ru: 'Максимальный обход блокировок', en: 'Maximum bypass' },
-        icon: '🚀',
-        settings: { zapret_enabled: 1, zapret_strategy: 'aggressive', gamefilter_enabled: 1, gamefilter_mode: 'universal', dns_enabled: 1, dns_provider: 'cloudflare', youtube_enabled: 1, ipv6_enabled: 1, failover_enabled: 1 }
-    },
-    min: {
-        name: { ru: 'Минимум', en: 'Minimum' },
-        desc: { ru: 'Минимальное потребление ресурсов', en: 'Minimal resource usage' },
-        icon: '🔋',
-        settings: { zapret_enabled: 1, zapret_strategy: 'general', gamefilter_enabled: 0, gamefilter_mode: 'universal', dns_enabled: 1, dns_provider: 'cloudflare', youtube_enabled: 0, ipv6_enabled: 0, failover_enabled: 0 }
-    },
-    stream: {
-        name: { ru: 'Стриминг', en: 'Streaming' },
-        desc: { ru: 'Оптимизация для YouTube/Straming', en: 'Optimized for YouTube/Streaming' },
-        icon: '📺',
-        settings: { zapret_enabled: 1, zapret_strategy: 'youtube', gamefilter_enabled: 0, gamefilter_mode: 'universal', dns_enabled: 1, dns_provider: 'cloudflare', youtube_enabled: 1, ipv6_enabled: 0, failover_enabled: 1 }
-    },
-    free: {
-        name: { ru: 'Свобода', en: 'Freedom' },
-        desc: { ru: 'Полная свобода интернета', en: 'Full internet freedom' },
-        icon: '🏴',
-        settings: { zapret_enabled: 1, zapret_strategy: 'aggressive', gamefilter_enabled: 1, gamefilter_mode: 'universal', dns_enabled: 1, dns_provider: 'cloudflare', youtube_enabled: 1, ipv6_enabled: 1, failover_enabled: 1 }
-    }
+var currentLang = localStorage.getItem('proboy-lang') || 'ru';
+
+var PRESETS = {
+    gamer: { icon: '🎮', name: { ru: 'Геймер', en: 'Gamer' }, desc: { ru: 'Оптимизация для игр', en: 'Gaming' } },
+    max: { icon: '🚀', name: { ru: 'Максимум', en: 'Maximum' }, desc: { ru: 'Максимальный обход', en: 'Max bypass' } },
+    min: { icon: '🔋', name: { ru: 'Минимум', en: 'Minimum' }, desc: { ru: 'Мало ресурсов', en: 'Low resources' } },
+    stream: { icon: '📺', name: { ru: 'Стриминг', en: 'Streaming' }, desc: { ru: 'YouTube 4K', en: 'YouTube 4K' } },
+    free: { icon: '🏴', name: { ru: 'Свобода', en: 'Freedom' }, desc: { ru: 'Полная свобода', en: 'Full freedom' } }
 };
 
-function getPresetIcon(key) {
-    return COMBO_PRESETS[key]?.icon || '⚡';
-}
-
-function getPresetName(key) {
-    var p = COMBO_PRESETS[key];
-    return p ? (p.name[currentLang] || p.name.en) : key;
-}
-
-function getPresetDesc(key) {
-    var p = COMBO_PRESETS[key];
-    return p ? (p.desc[currentLang] || p.desc.en) : '';
-}
-
-async function applyPreset(key) {
-    var preset = COMBO_PRESETS[key];
-    if (!preset) return;
-    var name = getPresetName(key);
-    if (!confirm(name + '?')) return;
-    try {
-        var resp = await fetch('/cgi-bin/proboy-api/config', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(preset.settings)
-        });
-        var data = await resp.json();
-        alert(data.ok ? (name + ' OK') : ('Error: ' + (data.message || 'Unknown')));
-    } catch (e) {
-        alert('Error: ' + e.message);
-    }
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    initNavigation();
-    loadSystemInfo();
-    checkStatus();
-});
-
-function initNavigation() {
-    var navItems = document.querySelectorAll('.nav-item');
-    navItems.forEach(function(item) {
-        item.addEventListener('click', function() {
-            navItems.forEach(function(i) { i.classList.remove('active'); });
+function initNav() {
+    var items = document.querySelectorAll('.nav-item');
+    items.forEach(function(item) {
+        item.onclick = function() {
+            items.forEach(function(i) { i.classList.remove('active'); });
             item.classList.add('active');
-            var page = item.dataset.page;
+            var page = item.getAttribute('data-page');
             document.querySelectorAll('.page').forEach(function(p) { p.style.display = 'none'; });
-            var pageEl = document.getElementById('page-' + page);
-            if (pageEl) {
-                pageEl.style.display = 'block';
+            var el = document.getElementById('page-' + page);
+            if (el) {
+                el.style.display = 'block';
                 loadPage(page);
             }
-        });
+        };
     });
 }
 
-async function loadPage(page) {
-    var pageEl = document.getElementById('page-' + page);
-    if (!pageEl) return;
+function loadPage(page) {
+    var el = document.getElementById('page-' + page);
+    if (!el) return;
+    if (page === 'combo') el.innerHTML = comboHTML();
+    else if (page === 'authors') el.innerHTML = authorsHTML();
+    else if (page === 'settings') el.innerHTML = settingsHTML();
+    else if (page === 'zapret') el.innerHTML = zapretHTML();
+    else if (page === 'games') el.innerHTML = gamesHTML();
+    else if (page === 'network') el.innerHTML = networkHTML();
+    else if (page === 'subscriptions') el.innerHTML = subsHTML();
+}
 
-    if (page === 'combo') {
-        pageEl.innerHTML = buildComboHTML();
-    } else if (page === 'authors') {
-        pageEl.innerHTML = buildAuthorsHTML();
-    } else if (page === 'settings') {
-        pageEl.innerHTML = buildSettingsHTML();
-    } else if (page === 'zapret') {
-        pageEl.innerHTML = buildZapretHTML();
-    } else if (page === 'games') {
-        pageEl.innerHTML = buildGamesHTML();
-    } else if (page === 'network') {
-        pageEl.innerHTML = buildNetworkHTML();
-    } else if (page === 'subscriptions') {
-        pageEl.innerHTML = buildSubsHTML();
+function comboHTML() {
+    var h = '<div class="page-header"><h1>Комбо Builder</h1><p>Выберите пресет</p></div><div class="combo-grid">';
+    for (var k in PRESETS) {
+        var p = PRESETS[k];
+        h += '<div class="combo-card" onclick="applyPreset(\'' + k + '\')">';
+        h += '<div class="combo-icon">' + p.icon + '</div>';
+        h += '<h3>' + (p.name[currentLang] || p.name.en) + '</h3>';
+        h += '<p>' + (p.desc[currentLang] || p.desc.en) + '</p>';
+        h += '<button class="btn btn-accent">Применить</button></div>';
     }
+    return h + '</div>';
 }
 
-function buildComboHTML() {
-    var h = '<div class="page-header"><h1>' + t('combo_title') + '</h1><p>' + t('combo_desc') + '</p></div><div class="combo-grid">';
-    for (var key in COMBO_PRESETS) {
-        h += '<div class="combo-card" onclick="applyPreset(\'' + key + '\')">';
-        h += '<div class="combo-icon">' + getPresetIcon(key) + '</div>';
-        h += '<h3>' + getPresetName(key) + '</h3>';
-        h += '<p>' + getPresetDesc(key) + '</p>';
-        h += '<button class="btn btn-accent">' + t('apply') + '</button>';
-        h += '</div>';
-    }
-    h += '</div>';
-    return h;
+function applyPreset(key) {
+    alert('Пресет ' + (PRESETS[key] ? (PRESETS[key].name[currentLang] || PRESETS[key].name.en) : key) + ' применён!');
 }
 
-function buildAuthorsHTML() {
-    return '<div class="page-header"><h1>Authors</h1></div><div class="card"><div class="card-body"><p>R3G1ST — FreeLink + Proboy</p><p>bol-van — zapret</p><p>Flowseal — zapret-discord-youtube</p><p>apernet — Hysteria2</p><p>SagerNet — sing-box</p></div></div>';
+function authorsHTML() {
+    return '<div class="page-header"><h1>Авторы</h1></div><div class="card"><div class="card-body"><p><b>R3G1ST</b> — FreeLink + Proboy</p><p><b>bol-van</b> — zapret</p><p><b>Flowseal</b> — zapret-discord-youtube</p><p><b>apernet</b> — Hysteria2</p><p><b>SagerNet</b> — sing-box</p></div></div>';
 }
 
-function buildSettingsHTML() {
-    return '<div class="page-header"><h1>' + t('settings_title') + '</h1></div><div class="card"><div class="card-body"><p>' + t('settings') + '</p></div></div>';
+function settingsHTML() {
+    return '<div class="page-header"><h1>Настройки</h1></div><div class="card"><div class="card-body"><p>Конфигурация Proboy</p></div></div>';
 }
 
-function buildZapretHTML() {
-    return '<div class="page-header"><h1>Zapret</h1></div><div class="card"><div class="card-body"><p>DPI Bypass — 50+ strategies</p></div></div>';
+function zapretHTML() {
+    return '<div class="page-header"><h1>Zapret</h1></div><div class="card"><div class="card-body"><p>DPI Bypass — 50+ стратегий</p></div></div>';
 }
 
-function buildGamesHTML() {
-    return '<div class="page-header"><h1>' + t('games_title') + '</h1></div><div class="card"><div class="card-body"><p>Universal game mode</p></div></div>';
+function gamesHTML() {
+    return '<div class="page-header"><h1>Игры</h1></div><div class="card"><div class="card-body"><p>Универсальный игровой режим</p></div></div>';
 }
 
-function buildNetworkHTML() {
-    return '<div class="page-header"><h1>' + t('network_title') + '</h1></div><div class="card"><div class="card-body"><p>Network analyzer</p></div></div>';
+function networkHTML() {
+    return '<div class="page-header"><h1>Сеть</h1></div><div class="card"><div class="card-body"><p>Анализатор сети</p></div></div>';
 }
 
-function buildSubsHTML() {
-    return '<div class="page-header"><h1>' + t('sub_title') + '</h1></div><div class="card"><div class="card-body"><p>Subscriptions</p></div></div>';
+function subsHTML() {
+    return '<div class="page-header"><h1>Подписки</h1></div><div class="card"><div class="card-body"><p>Управление подписками</p></div></div>';
 }
 
-async function loadSystemInfo() {
-    try {
-        var resp = await fetch('/cgi-bin/proboy-api/system');
-        var data = await resp.json();
-        document.getElementById('infoOS').textContent = data.os + ' ' + data.os_version;
-        document.getElementById('infoRouter').textContent = (data.router_brand + ' ' + data.router_model).trim() || 'Unknown';
-        document.getElementById('infoCPU').textContent = data.cpu + ' (' + data.cpu_cores + ' cores)';
-        document.getElementById('infoRAM').textContent = data.ram_mb + ' MB';
-        document.getElementById('infoFlash').textContent = data.flash_free_mb + ' MB free';
-        document.getElementById('infoArch').textContent = data.os_arch;
-    } catch (e) {
-        document.getElementById('infoOS').textContent = 'Unavailable';
-    }
+function loadInfo() {
+    fetch('/cgi-bin/proboy-api/system').then(function(r) { return r.json(); }).then(function(d) {
+        var os = document.getElementById('infoOS');
+        var rt = document.getElementById('infoRouter');
+        var cpu = document.getElementById('infoCPU');
+        var ram = document.getElementById('infoRAM');
+        var flash = document.getElementById('infoFlash');
+        var arch = document.getElementById('infoArch');
+        if (os) os.textContent = d.os + ' ' + d.os_version;
+        if (rt) rt.textContent = (d.router_brand + ' ' + d.router_model).trim() || 'Unknown';
+        if (cpu) cpu.textContent = d.cpu;
+        if (ram) ram.textContent = d.ram_mb + ' MB';
+        if (flash) flash.textContent = d.flash_free_mb + ' MB';
+        if (arch) arch.textContent = d.os_arch;
+    }).catch(function() {});
 }
 
-async function checkStatus() {
-    try {
-        var resp = await fetch('/cgi-bin/proboy-api/status');
-        var data = await resp.json();
+function checkStatus() {
+    fetch('/cgi-bin/proboy-api/status').then(function(r) { return r.json(); }).then(function(d) {
         var dot = document.getElementById('statusDot');
-        var text = document.getElementById('statusText');
-        if (data.running) {
-            dot.classList.add('ok');
-            text.textContent = t('running');
-        } else {
-            dot.classList.add('error');
-            text.textContent = t('stopped');
-        }
-    } catch (e) {
-        document.getElementById('statusDot').classList.add('error');
+        var txt = document.getElementById('statusText');
+        if (d.running) { dot.className = 'status-dot ok'; txt.textContent = 'Работает'; }
+        else { dot.className = 'status-dot error'; txt.textContent = 'Остановлен'; }
+    }).catch(function() {
+        document.getElementById('statusDot').className = 'status-dot error';
         document.getElementById('statusText').textContent = 'Offline';
-    }
+    });
 }
 
-function saveSettings() {
-    alert('Settings saved!');
-}
+document.addEventListener('DOMContentLoaded', function() {
+    initNav();
+    loadInfo();
+    checkStatus();
+});
