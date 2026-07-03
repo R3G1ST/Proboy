@@ -1,0 +1,19 @@
+{
+    "luci-proboy": {
+        "description": "Proboy control",
+        "read": {
+            "uci-proboy": true,
+            "file": {
+                "/etc/proboy/*": true,
+                "/var/run/proboy/*": true
+            }
+        },
+        "write": {
+            "uci-proboy": true,
+            "file": {
+                "/etc/init.d/proboy": ["exec"],
+                "/opt/proboy/scripts/proboy.sh": ["exec"]
+            }
+        }
+    }
+}
