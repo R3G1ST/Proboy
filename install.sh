@@ -397,9 +397,15 @@ else
     echo "[OK] sing-box kept"
 fi
 
-# Flush nftables
-echo "[>>] Flushing firewall rules..."
-command -v nft >/dev/null 2>&1 && nft flush ruleset 2>/dev/null
+# Flush only Proboy nftables tables (NOT the entire ruleset!)
+echo "[>>] Flushing Proboy firewall rules..."
+if command -v nft >/dev/null 2>&1; then
+    nft delete table inet proboy_game 2>/dev/null || true
+    nft delete table inet proboy_dns 2>/dev/null || true
+    nft delete table inet proboy_ps5 2>/dev/null || true
+    nft delete table inet proboy_youtube 2>/dev/null || true
+    nft delete table inet proboy_ipv6 2>/dev/null || true
+fi
 
 # Remove all Proboy files
 echo "[>>] Removing Proboy files..."

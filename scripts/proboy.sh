@@ -124,9 +124,13 @@ stop_zapret() {
         remove_pid "zapret"
     fi
 
-    # Flush nftables rules
+    # Flush only Proboy nftables tables (NOT the entire ruleset!)
     if command -v nft >/dev/null 2>&1; then
-        nft flush ruleset 2>/dev/null || true
+        nft delete table inet proboy_game 2>/dev/null || true
+        nft delete table inet proboy_dns 2>/dev/null || true
+        nft delete table inet proboy_ps5 2>/dev/null || true
+        nft delete table inet proboy_youtube 2>/dev/null || true
+        nft delete table inet proboy_ipv6 2>/dev/null || true
     fi
 
     log_info "Zapret stopped"
@@ -261,9 +265,13 @@ stop_all() {
     stop_singbox
     stop_zapret
 
-    # Flush all nftables
+    # Flush only Proboy nftables tables (NOT the entire ruleset!)
     if command -v nft >/dev/null 2>&1; then
-        nft flush ruleset 2>/dev/null || true
+        nft delete table inet proboy_game 2>/dev/null || true
+        nft delete table inet proboy_dns 2>/dev/null || true
+        nft delete table inet proboy_ps5 2>/dev/null || true
+        nft delete table inet proboy_youtube 2>/dev/null || true
+        nft delete table inet proboy_ipv6 2>/dev/null || true
     fi
 
     rm -rf "${PID_DIR}"

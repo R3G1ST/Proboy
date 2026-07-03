@@ -4,7 +4,8 @@
 # Routes game traffic through zapret NFQUEUE
 # ═══════════════════════════════════════════════════════
 
-flush ruleset
+# Flush only Proboy tables (NOT the entire ruleset!)
+delete table inet proboy_game 2>/dev/null || true
 
 table inet proboy_game {
     chain prerouting {
