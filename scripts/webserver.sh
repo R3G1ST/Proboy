@@ -1,6 +1,6 @@
 #!/bin/sh
 # ═══════════════════════════════════════════════════════
-# Proboy Web Server — uhttpd or busybox httpd + CGI API
+# Proboy Web Server — uhttpd (OpenWrt) + CGI API
 # ═══════════════════════════════════════════════════════
 
 WEB_DIR="/opt/proboy/web"
@@ -10,6 +10,8 @@ LOG_DIR="/var/log/proboy"
 CONFIG_DIR="/etc/proboy"
 PORT="${web_port:-8080}"
 HTTPD_PID="${PID_DIR}/webserver.pid"
+UCI_CONF="/etc/config/uhttpd"
+SECTION="proboy"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -41,32 +43,55 @@ get_ip() {
     echo "${ip}"
 }
 
-# Kill by PID file without pkill
-kill_by_pidfile() {
-    local pidfile="$1"
-    if [ -f "${pidfile}" ]; then
-        local pid=$(cat "${pidfile}" 2>/dev/null)
-        if [ -n "${pid}" ]; then
+stop_existing() {
+    # Kill by PID file
+    if [ -f "${HTTPD_PID}" ]; then
+        local pid=$(cat "${HTTPD_PID}" 2>/dev/null)
+        if [ -n "${pid}" ] && kill -0 "${pid}" 2>/dev/null; then
             kill "${pid}" 2>/dev/null || true
             sleep 1
-            # Force kill if still alive
-            kill -0 "${pid}" 2>/dev/null && kill -9 "${pid}" 2>/dev/null || true
         fi
-        rm -f "${pidfile}"
+        rm -f "${HTTPD_PID}"
     fi
+    # Kill uhttpd proboy instances
+    for pid in $(ps 2>/dev/null | grep "[u]httpd" | awk '{print $1}'); do
+        local cmdline=$(cat /proc/${pid}/cmdline 2>/dev/null | tr '\0' ' ')
+        case "${cmdline}" in
+            *${UCI_CONF}*|*proboy*) kill "${pid}" 2>/dev/null || true ;;
+        esac
+    done
+    # Kill simple server
+    for pid in $(ps 2>/dev/null | grep "[p]roboy-httpd" | awk '{print $1}'); do
+        kill "${pid}" 2>/dev/null || true
+    done
+    sleep 1
 }
 
-stop_existing() {
-    kill_by_pidfile "${HTTPD_PID}"
-
-    # Kill by finding process on port
-    if command -v fuser >/dev/null 2>&1; then
-        fuser -k "${PORT}/tcp" 2>/dev/null || true
-    elif command -v netstat >/dev/null 2>&1; then
-        local pid=$(netstat -tlnp 2>/dev/null | grep ":${PORT} " | awk '{print $NF}' | cut -d/ -f1)
-        [ -n "${pid}" ] && kill "${pid}" 2>/dev/null || true
+# Add Proboy section to uhttpd UCI config
+configure_uhttpd() {
+    if [ ! -f "${UCI_CONF}" ]; then
+        return 1
     fi
-    sleep 1
+
+    # Check if proboy section already exists
+    if uci get uhttpd.${SECTION} >/dev/null 2>&1; then
+        # Update existing section
+        uci set uhttpd.${SECTION}.listen_http="0.0.0.0:${PORT}"
+        uci set uhttpd.${SECTION}.home="${WEB_DIR}"
+        uci set uhttpd.${SECTION}.cgi_prefix="/cgi-bin"
+        uci set uhttpd.${SECTION}.cgi_handler="/bin/sh"
+        uhttpd.index_page="index.html"
+    else
+        # Create new section
+        uci set uhttpd.${SECTION}=uhttpd
+        uci set uhttpd.${SECTION}.listen_http="0.0.0.0:${PORT}"
+        uci set uhttpd.${SECTION}.home="${WEB_DIR}"
+        uci set uhttpd.${SECTION}.cgi_prefix="/cgi-bin"
+        uci set uhttpd.${SECTION}.cgi_handler="/bin/sh"
+        uci set uhttpd.${SECTION}.index_page="index.html"
+    fi
+    uci commit uhttpd 2>/dev/null
+    return 0
 }
 
 start_uhttpd() {
@@ -76,39 +101,31 @@ start_uhttpd() {
 
     log_step "Starting uhttpd on port ${PORT}..."
 
-    # Method 1: Direct CLI flags
-    uhttpd -f -p "${PORT}" -h "${WEB_DIR}" -r "${CGI_DIR}" -i "index.html" 2>/dev/null &
+    # Configure via UCI
+    if configure_uhttpd; then
+        # Restart uhttpd to apply config
+        /etc/init.d/uhttpd restart 2>/dev/null || true
+        sleep 2
+
+        # Check if port is listening
+        if netstat -tlnp 2>/dev/null | grep -q ":${PORT} "; then
+            log_info "uhttpd started via UCI"
+            log_info "URL: http://$(get_ip):${PORT}"
+            return 0
+        fi
+    fi
+
+    # Fallback: direct CLI
+    log_warn "UCI method failed, trying direct start..."
+    uhttpd -f -p "${PORT}" -h "${WEB_DIR}" -r "${CGI_DIR}" 2>/dev/null &
     local pid=$!
     sleep 2
 
     if [ -n "${pid}" ] && kill -0 "${pid}" 2>/dev/null; then
         echo "${pid}" > "${HTTPD_PID}"
-        log_info "uhttpd started (PID: ${pid})"
+        log_info "uhttpd started directly (PID: ${pid})"
         log_info "URL: http://$(get_ip):${PORT}"
         return 0
-    fi
-
-    # Method 2: Add to /etc/config/uhttpd and restart
-    log_warn "Direct start failed, trying UCI method..."
-    if [ -f /etc/config/uhttpd ] && ! grep -q "proboy" /etc/config/uhttpd 2>/dev/null; then
-        cat >> /etc/config/uhttpd << UEOF
-
-config uhttpd 'proboy'
-    list listen_http '0.0.0.0:${PORT}'
-    option home '${WEB_DIR}'
-    option cgi_prefix '/cgi-bin'
-    option cgi_handler '/bin/sh'
-    option index_page 'index.html'
-UEOF
-        /etc/init.d/uhttpd restart 2>/dev/null || true
-        sleep 3
-
-        # Check if port is now listening
-        if netstat -tlnp 2>/dev/null | grep -q ":${PORT}"; then
-            log_info "uhttpd configured via UCI"
-            log_info "URL: http://$(get_ip):${PORT}"
-            return 0
-        fi
     fi
 
     return 1
@@ -121,8 +138,8 @@ start_busybox_httpd() {
 
     log_step "Starting busybox httpd on port ${PORT}..."
 
-    # BusyBox httpd with CGI support
-    httpd -f -p "${PORT}" -h "${WEB_DIR}" -c /etc/passwd 2>/dev/null &
+    # BusyBox httpd - try with CGI
+    httpd -f -p "${PORT}" -h "${WEB_DIR}" 2>/dev/null &
     local pid=$!
     sleep 2
 
@@ -144,13 +161,46 @@ start_simple_server() {
 PORT="$1"
 WEB_DIR="$2"
 while true; do
-    {
-        echo "HTTP/1.0 200 OK"
-        echo "Content-Type: text/html"
-        echo "Connection: close"
-        echo ""
-        cat "${WEB_DIR}/index.html" 2>/dev/null || echo "<h1>Proboy</h1>"
-    } | nc -l -p "${PORT}" -q 0 2>/dev/null
+    REQ=$(nc -l -p "${PORT}" -q 1 2>/dev/null)
+    # Extract path from request
+    PATH_REQ=$(echo "${REQ}" | head -1 | awk '{print $2}')
+
+    if echo "${PATH_REQ}" | grep -q "/api/"; then
+        # CGI API request - execute proboy-api
+        export REQUEST_METHOD="GET"
+        export REQUEST_URI="${PATH_REQ}"
+        export PATH_INFO="${PATH_REQ}"
+        RESP=$("${WEB_DIR}/cgi-bin/proboy-api" 2>/dev/null)
+        {
+            echo "HTTP/1.0 200 OK"
+            echo "Content-Type: application/json"
+            echo "Access-Control-Allow-Origin: *"
+            echo "Connection: close"
+            echo ""
+            echo "${RESP}"
+        } | nc -l -p "${PORT}" -q 1 2>/dev/null
+    else
+        # Static file request
+        FILE="${WEB_DIR}${PATH_REQ}"
+        [ "${PATH_REQ}" = "/" ] && FILE="${WEB_DIR}/index.html"
+        if [ -f "${FILE}" ]; then
+            {
+                echo "HTTP/1.0 200 OK"
+                echo "Content-Type: text/html"
+                echo "Connection: close"
+                echo ""
+                cat "${FILE}"
+            } | nc -l -p "${PORT}" -q 1 2>/dev/null
+        else
+            {
+                echo "HTTP/1.0 404 Not Found"
+                echo "Content-Type: text/html"
+                echo "Connection: close"
+                echo ""
+                echo "<h1>404 Not Found</h1>"
+            } | nc -l -p "${PORT}" -q 1 2>/dev/null
+        fi
+    fi
 done
 SEOF
     chmod +x "${PID_DIR}/proboy-httpd.sh"
@@ -159,7 +209,7 @@ SEOF
     local pid=$!
     if [ -n "${pid}" ]; then
         echo "${pid}" > "${HTTPD_PID}"
-        log_warn "Simple server started (PID: ${pid})"
+        log_info "Server started with CGI support (PID: ${pid})"
         log_info "URL: http://$(get_ip):${PORT}"
         return 0
     fi
@@ -195,18 +245,8 @@ start_webserver() {
 }
 
 stop_webserver() {
-    kill_by_pidfile "${HTTPD_PID}"
-
-    # Kill by port
-    if command -v fuser >/dev/null 2>&1; then
-        fuser -k "${PORT}/tcp" 2>/dev/null || true
-    fi
-
-    # Kill simple server
-    local spid=$(cat "${PID_DIR}/proboy-httpd.pid" 2>/dev/null)
-    [ -n "${spid}" ] && kill "${spid}" 2>/dev/null || true
-    rm -f "${PID_DIR}/proboy-httpd.pid" "${PID_DIR}/proboy-httpd.sh"
-
+    stop_existing
+    rm -f "${PID_DIR}/proboy-httpd.sh"
     log_info "Web server stopped"
 }
 
