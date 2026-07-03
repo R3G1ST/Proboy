@@ -12,14 +12,15 @@ REPO="https://raw.githubusercontent.com/R3G1ST/Proboy/main"
 DIR="/opt/proboy"
 CFG="/etc/proboy"
 
-RED='\033[0;31m'
-GRN='\033[0;32m'
-YEL='\033[1;33m'
-BLU='\033[0;34m'
-CYN='\033[0;36m'
-MAG='\033[0;35m'
-NC='\033[0m'
-B='\033[1m'
+# Generate escape codes properly for BusyBox ash
+RED=$(printf '\033[0;31m')
+GRN=$(printf '\033[0;32m')
+YEL=$(printf '\033[1;33m')
+BLU=$(printf '\033[0;34m')
+CYN=$(printf '\033[0;36m')
+MAG=$(printf '\033[0;35m')
+NC=$(printf '\033[0m')
+B=$(printf '\033[1m')
 
 ok()   { printf "${GRN}[OK]${NC} %s\n" "$1"; }
 warn() { printf "${YEL}[!!]${NC} %s\n" "$1"; }
@@ -36,19 +37,19 @@ dl() {
 }
 
 show_banner() {
-    echo ""
-    echo "${CYN}  ============================================ ${NC}"
-    echo "${CYN}  ${B}P R O B O Y${NC}   x   ${MAG}F R E E L I N K${NC}"
-    echo "${CYN}  ============================================ ${NC}"
-    echo ""
-    echo "  ${B}Version:${NC}     ${CYN}${VER}${NC}"
-    echo "  ${B}Codename:${NC}    ${MAG}${CODENAME}${NC}"
-    echo "  ${B}Status:${NC}      ${YEL}${STATUS}${NC}"
-    echo "  ${B}GitHub:${NC}      ${CYN}github.com/R3G1ST/Proboy${NC}"
-    echo ""
-    echo "  ${GRN}Internet Freedom for People${NC}"
-    echo "  DPI bypass | Gaming | PS5 | Subscriptions"
-    echo ""
+    printf "\n"
+    printf "%s\n" "  ============================================"
+    printf "${CYN}%s${NC}\n" "  P R O B O Y   x   F R E E L I N K"
+    printf "%s\n" "  ============================================"
+    printf "\n"
+    printf "  ${B}%s${NC}     ${CYN}%s${NC}\n" "Version:" "${VER}"
+    printf "  ${B}%s${NC}    ${MAG}%s${NC}\n" "Codename:" "${CODENAME}"
+    printf "  ${B}%s${NC}      ${YEL}%s${NC}\n" "Status:" "${STATUS}"
+    printf "  ${B}%s${NC}      ${CYN}%s${NC}\n" "GitHub:" "github.com/R3G1ST/Proboy"
+    printf "\n"
+    printf "  ${GRN}%s${NC}\n" "Internet Freedom for People"
+    printf "  DPI bypass | Gaming | PS5 | Subscriptions"
+    printf "\n\n"
 }
 
 detect_system() {
@@ -107,11 +108,12 @@ detect_system() {
     [ -n "${ROUTER}" ] && ok "Router: ${BRAND} ${ROUTER}"
     [ -n "${BOARD}" ] && [ "${BOARD}" != "${ROUTER}" ] && ok "Board: ${BOARD}"
 
-    CPU="$(cat /proc/cpuinfo 2>/dev/null | grep -m1 'model name' | cut -d: -f2 | xargs)"
+    CPU="$(cat /proc/cpuinfo 2>/dev/null | grep -m1 'model name\|Processor\|Hardware\|CPU implementer' | cut -d: -f2 | xargs)"
+    [ -z "${CPU}" ] && CPU="$(uname -m)"
     CORES="$(nproc 2>/dev/null || echo 1)"
-    [ -n "${CPU}" ] && ok "CPU: ${CPU} - ${CORES} cores"
+    ok "CPU: ${CPU} - ${CORES} cores"
 
-    RAM="$(free -m 2>/dev/null | awk '/Mem:/{print $2}' || echo 0)"
+    RAM="$(free 2>/dev/null | awk '/Mem:/{print int($2/1024)}' || echo 0)"
     [ "${RAM}" -gt 0 ] && ok "RAM: ${RAM} MB"
 
     FLASH="$(df -m / 2>/dev/null | tail -1 | awk '{print $4}' || echo 0)"
