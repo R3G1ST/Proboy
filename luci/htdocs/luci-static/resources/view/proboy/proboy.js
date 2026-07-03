@@ -12,28 +12,28 @@ function isRunning(name) {
     return false;
 }
 
-function sysInfo() {
+async function sysInfo() {
     var R = {};
     try { var m = fs.read("/proc/meminfo"); if (m) { var x = m.match(/MemTotal:\s+(\d+)/); if (x) R.ram = Math.round(parseInt(x[1])/1024)+" MB"; } } catch(e) {}
-    try { var d = fs.exec("/bin/df",["-m","/"]); if (d && d.stdout) { var p = d.stdout.split("\n")[1].split(/\s+/); R.flash = p[3]+" MB free"; } } catch(e) {}
+    try { var d = await fs.exec("/bin/df",["-m","/"]); if (d && d.stdout) { var p = d.stdout.split("\n")[1].split(/\s+/); R.flash = p[3]+" MB free"; } } catch(e) {}
     try { var c = fs.read("/proc/cpuinfo"); if (c) { var x = c.match(/model name\s*:\s*(.+)/i)||c.match(/Processor\s*:\s*(.+)/i); if (x) R.cpu = x[1].trim(); } } catch(e) {}
-    try { R.cores = fs.exec("/bin/nproc").stdout.trim(); } catch(e) { R.cores="1"; }
-    try { R.arch = fs.exec("/bin/uname",["-m"]).stdout.trim(); } catch(e) {}
+    try { var n = await fs.exec("/bin/nproc"); if (n && n.stdout) R.cores = n.stdout.trim(); } catch(e) { R.cores="1"; }
+    try { var u = await fs.exec("/bin/uname",["-m"]); if (u && u.stdout) R.arch = u.stdout.trim(); } catch(e) {}
     try { var r = fs.read("/etc/openwrt_release"); if (r) { var d = r.match(/DISTRIB_RELEASE='([^']+)'/); R.os = "OpenWrt " + (d?d[1]:"?"); } } catch(e) {}
     try { var md = fs.read("/tmp/sysinfo/model"); if (md) R.model = md.trim(); } catch(e) {}
     try { R.ver = fs.read("/opt/proboy/VERSION").trim(); } catch(e) {}
-    try { var ip = fs.exec("/bin/ip",["-4","addr","show","br-lan"]); if (ip && ip.stdout) { var x = ip.stdout.match(/inet\s+([\d.]+)/); if (x) R.ip = x[1]; } } catch(e) {}
-    try { var rt = fs.exec("/bin/ip",["route","show","default"]); if (rt && rt.stdout) { var x = rt.stdout.match(/via\s+([\d.]+)/); if (x) R.gw = x[1]; } } catch(e) {}
+    try { var ip = await fs.exec("/bin/ip",["-4","addr","show","br-lan"]); if (ip && ip.stdout) { var x = ip.stdout.match(/inet\s+([\d.]+)/); if (x) R.ip = x[1]; } } catch(e) {}
+    try { var rt = await fs.exec("/bin/ip",["route","show","default"]); if (rt && rt.stdout) { var x = rt.stdout.match(/via\s+([\d.]+)/); if (x) R.gw = x[1]; } } catch(e) {}
     try { var rs = fs.read("/tmp/resolv.conf")||fs.read("/tmp/resolv.conf.d/resolv.conf.auto"); if (rs) { var s=[]; rs.split("\n").forEach(function(l){var m=l.match(/nameserver\s+([\d.]+)/);if(m)s.push(m[1]);}); R.dns=s.join(", "); } } catch(e) {}
-    try { var u = fs.read("/proc/uptime"); if (u) { var s=parseFloat(u.split(" ")[0]); R.uptime=Math.floor(s/86400)+"d "+Math.floor((s%86400)/3600)+"h "+Math.floor((s%3600)/60)+"m"; } } catch(e) {}
+    try { var up = fs.read("/proc/uptime"); if (up) { var s=parseFloat(up.split(" ")[0]); R.uptime=Math.floor(s/86400)+"d "+Math.floor((s%86400)/3600)+"h "+Math.floor((s%3600)/60)+"m"; } } catch(e) {}
     return R;
 }
 
 return view.extend({
-    render: function() {
+    render: async function() {
         var m = new form.Map("proboy", "\u041F\u0440\u043E\u0431\u043E\u0439", "Anti-censorship suite");
         m.tabbed = true;
-        var info = sysInfo();
+        var info = await sysInfo();
 
         var s = m.section(form.TypedSection, "proboy", "\u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438 Proboy");
         s.anonymous = true;
